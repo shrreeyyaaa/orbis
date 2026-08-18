@@ -11,12 +11,13 @@ export async function updateSession(request: NextRequest) {
 
   if (!url || !key || url.includes("your-project-ref.supabase.co")) {
     const demoCookie = request.cookies.get("orbis_demo_logged_in")?.value;
+    const isLoggedIn = demoCookie === "true";
     const path = request.nextUrl.pathname;
     const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
 
-    // If logged out
-    if (demoCookie === "false") {
-      if (!isPublic && path !== "/") {
+    // If NOT logged in: redirect root (/) and protected routes to /login
+    if (!isLoggedIn) {
+      if (!isPublic) {
         const redirectUrl = request.nextUrl.clone();
         redirectUrl.pathname = "/login";
         return NextResponse.redirect(redirectUrl);
@@ -24,18 +25,10 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // If logged in (or default initial load)
-    if (path === "/login" || path === "/signup") {
-      if (demoCookie === "true") {
-        const redirectUrl = request.nextUrl.clone();
-        redirectUrl.pathname = "/dashboard";
-        return NextResponse.redirect(redirectUrl);
-      }
-    }
-
-    if (path === "/") {
+    // If logged in: redirect root (/) and auth pages (/login, /signup) to /dashboard
+    if (isLoggedIn && (path === "/" || path === "/login" || path === "/signup")) {
       const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = demoCookie === "false" ? "/login" : "/dashboard";
+      redirectUrl.pathname = "/dashboard";
       return NextResponse.redirect(redirectUrl);
     }
 

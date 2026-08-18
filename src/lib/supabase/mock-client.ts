@@ -110,7 +110,7 @@ export function createMockSupabaseClient() {
       async getUser() {
         if (typeof document !== "undefined") {
           const cookies = document.cookie.split(";").map((c) => c.trim());
-          const hasSession = cookies.some((c) => c.startsWith("orbis_demo_logged_in=true"));
+          const hasSession = cookies.some((c) => c === "orbis_demo_logged_in=true");
           if (!hasSession) {
             return { data: { user: null }, error: null };
           }

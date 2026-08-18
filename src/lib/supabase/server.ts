@@ -14,7 +14,7 @@ export async function createClient() {
     const demoCookie = cookieStore.get("orbis_demo_logged_in")?.value;
     const client = createMockSupabaseClient();
 
-    if (demoCookie === "false") {
+    if (demoCookie !== "true") {
       client.auth.getUser = async () => ({ data: { user: null }, error: null });
     } else {
       client.auth.getUser = async () => ({ data: { user: MOCK_USER }, error: null });
