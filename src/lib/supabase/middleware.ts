@@ -10,13 +10,35 @@ export async function updateSession(request: NextRequest) {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key || url.includes("your-project-ref.supabase.co")) {
-    // In local mock mode, allow navigating directly to dashboard
+    const demoCookie = request.cookies.get("orbis_demo_logged_in")?.value;
     const path = request.nextUrl.pathname;
-    if (path === "/" || path === "/login" || path === "/signup") {
+    const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
+
+    // If logged out
+    if (demoCookie === "false") {
+      if (!isPublic && path !== "/") {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = "/login";
+        return NextResponse.redirect(redirectUrl);
+      }
+      return NextResponse.next();
+    }
+
+    // If logged in (or default initial load)
+    if (path === "/login" || path === "/signup") {
+      if (demoCookie === "true") {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = "/dashboard";
+        return NextResponse.redirect(redirectUrl);
+      }
+    }
+
+    if (path === "/") {
       const redirectUrl = request.nextUrl.clone();
-      redirectUrl.pathname = "/dashboard";
+      redirectUrl.pathname = demoCookie === "false" ? "/login" : "/dashboard";
       return NextResponse.redirect(redirectUrl);
     }
+
     return NextResponse.next();
   }
 

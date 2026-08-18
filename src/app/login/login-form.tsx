@@ -13,8 +13,8 @@ export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/dashboard";
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("demo@orbis.local");
+  const [password, setPassword] = useState("demo123");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +35,22 @@ export function LoginForm() {
 
   return (
     <AuthShell title="Welcome back" subtitle="Sign in to your wealth dashboard.">
+      {/* Demo Credentials Box */}
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs space-y-1.5 mb-2">
+        <div className="font-semibold text-primary flex items-center gap-1.5 text-sm">
+          <span>✨</span> Demo Access Credentials
+        </div>
+        <div className="text-muted-foreground leading-relaxed">
+          You can sign in using the demo account credentials below or any test email:
+        </div>
+        <div className="pt-1 font-mono text-[11px] space-y-1">
+          <div><span className="text-muted-foreground">Email:</span> <strong className="text-foreground bg-background/80 px-1.5 py-0.5 rounded border border-border">demo@orbis.local</strong></div>
+          <div><span className="text-muted-foreground">Password:</span> <strong className="text-foreground bg-background/80 px-1.5 py-0.5 rounded border border-border">demo123</strong></div>
+        </div>
+      </div>
+
       <OAuthButtons next={next} />
+
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -61,7 +76,7 @@ export function LoginForm() {
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "Signing in..." : "Sign in to Dashboard"}
         </Button>
       </form>
       <p className="text-center text-sm text-muted-foreground">

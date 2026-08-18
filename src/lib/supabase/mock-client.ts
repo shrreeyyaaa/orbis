@@ -108,15 +108,31 @@ export function createMockSupabaseClient() {
   return {
     auth: {
       async getUser() {
+        if (typeof document !== "undefined") {
+          const cookies = document.cookie.split(";").map((c) => c.trim());
+          const hasSession = cookies.some((c) => c.startsWith("orbis_demo_logged_in=true"));
+          if (!hasSession) {
+            return { data: { user: null }, error: null };
+          }
+        }
         return { data: { user: MOCK_USER }, error: null };
       },
       async signInWithPassword(_credentials: any) {
+        if (typeof document !== "undefined") {
+          document.cookie = "orbis_demo_logged_in=true; path=/; max-age=31536000; SameSite=Lax";
+        }
         return { data: { user: MOCK_USER, session: {} }, error: null };
       },
       async signUp(_credentials: any) {
+        if (typeof document !== "undefined") {
+          document.cookie = "orbis_demo_logged_in=true; path=/; max-age=31536000; SameSite=Lax";
+        }
         return { data: { user: MOCK_USER, session: {} }, error: null };
       },
       async signOut() {
+        if (typeof document !== "undefined") {
+          document.cookie = "orbis_demo_logged_in=false; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        }
         return { error: null };
       },
       onAuthStateChange(callback: any) {

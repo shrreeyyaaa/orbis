@@ -69,6 +69,7 @@ export function AppShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   async function onLogout() {
+    document.cookie = "orbis_demo_logged_in=false; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");
