@@ -23,7 +23,6 @@ import {
   FlaskConical,
   Trophy,
   Users,
-  Settings,
   Plus,
   SunMoon,
   Lightbulb,
@@ -45,7 +44,6 @@ const NAV = [
   { href: "/simulate", label: "Simulate", icon: FlaskConical },
   { href: "/achievements", label: "Achievements", icon: Trophy },
   { href: "/family", label: "Family", icon: Users },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const ADD = [

@@ -48,7 +48,6 @@ const nav = [
   { href: "/simulate", label: "Simulate", icon: FlaskConical },
   { href: "/achievements", label: "Achievements", icon: Trophy },
   { href: "/family", label: "Family", icon: Users },
-  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function AppShell({
@@ -120,7 +119,21 @@ export function AppShell({
             </nav>
             <div className="border-t p-3 text-xs text-muted-foreground">
               <p className="truncate">{userEmail}</p>
-              <p className="mt-0.5 truncate">{household.name}</p>
+              <div className="mt-0.5 flex items-center gap-1">
+                <p className="min-w-0 flex-1 truncate">{household.name}</p>
+                <Link
+                  href="/settings"
+                  aria-label="Settings"
+                  title="Settings"
+                  className={`rounded-md p-1 transition-colors hover:bg-accent hover:text-foreground ${
+                    pathname === "/settings" || pathname.startsWith("/settings/")
+                      ? "bg-accent text-gold"
+                      : ""
+                  }`}
+                >
+                  <Settings className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
           </aside>
 
