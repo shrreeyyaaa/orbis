@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { ExchangeRate, Household, Owner } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,8 @@ import {
   TrendingUp,
   Landmark,
   CreditCard,
-  ArrowDownUp,
+  CircleDollarSign,
+  ReceiptText,
   Target,
   FlaskConical,
   Trophy,
@@ -41,7 +42,8 @@ const nav = [
   { href: "/investments", label: "Investments", icon: TrendingUp },
   { href: "/assets", label: "Assets", icon: Landmark },
   { href: "/liabilities", label: "Liabilities", icon: CreditCard },
-  { href: "/cashflow", label: "Cash Flow", icon: ArrowDownUp },
+  { href: "/cashflow?view=income", label: "Income", icon: CircleDollarSign, cashflowView: "income" },
+  { href: "/cashflow?view=expenses", label: "Expenses", icon: ReceiptText, cashflowView: "expenses" },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/simulate", label: "Simulate", icon: FlaskConical },
   { href: "/achievements", label: "Achievements", icon: Trophy },
@@ -65,6 +67,7 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -93,8 +96,9 @@ export function AppShell({
             <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
               {nav.map((item) => {
                 const Icon = item.icon;
-                const active =
-                  pathname === item.href || pathname.startsWith(item.href + "/");
+                const active = item.cashflowView
+                  ? pathname === "/cashflow" && (searchParams.get("view") ?? "income") === item.cashflowView
+                  : pathname === item.href || pathname.startsWith(item.href + "/");
                 return (
                   <Link
                     key={item.href}
@@ -169,8 +173,9 @@ export function AppShell({
                 <nav className="grid max-h-[calc(100vh-3.5rem)] grid-cols-2 gap-1 overflow-y-auto border-b bg-card p-3 shadow-lg lg:hidden">
                   {nav.map((item) => {
                     const Icon = item.icon;
-                    const active =
-                      pathname === item.href || pathname.startsWith(item.href + "/");
+                    const active = item.cashflowView
+                      ? pathname === "/cashflow" && (searchParams.get("view") ?? "income") === item.cashflowView
+                      : pathname === item.href || pathname.startsWith(item.href + "/");
                     return (
                       <Link
                         key={item.href}

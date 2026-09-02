@@ -305,7 +305,8 @@ export function DashboardView({
     { label: "Add an account", done: portfolio.accounts.length > 0, href: "/accounts" },
     { label: "Add an asset", done: portfolio.assets.length > 0, href: "/assets" },
     { label: "Track a liability", done: portfolio.liabilities.length > 0, href: "/liabilities" },
-    { label: "Record income or expenses", done: incomeSources.length > 0 || expenses.length > 0, href: "/cashflow" },
+    { label: "Record income", done: incomeSources.length > 0, href: "/cashflow?view=income&new=income" },
+    { label: "Record expenses", done: expenses.length > 0, href: "/cashflow?view=expenses&new=expense" },
     { label: "Set a goal", done: goals.length > 0, href: "/goals" },
   ];
 
@@ -341,7 +342,7 @@ export function DashboardView({
         />
       </div>
 
-      <Stagger className="mt-4 grid gap-4 sm:grid-cols-3">
+      <Stagger className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StaggerItem>
           <StatCard label="Total Assets" {...animMoney(nw.totalAssetsMinor)} sub={`${nw.items.filter((i) => i.baseMinor > 0).length} holdings`} />
         </StaggerItem>
@@ -349,7 +350,13 @@ export function DashboardView({
           <StatCard label="Total Liabilities" {...animMoney(nw.totalLiabilitiesMinor)} accent={nw.totalLiabilitiesMinor > 0 ? "negative" : "default"} sub={`${scoped.liabilities.length} debts`} />
         </StaggerItem>
         <StaggerItem>
-          <StatCard label="Annual Net Cash Flow" {...animMoney(annualIncome - annualExpenses)} accent={annualIncome - annualExpenses >= 0 ? "positive" : "negative"} sub={`${show(annualIncome)} in / ${show(annualExpenses)} out`} />
+          <StatCard label="Annual Income" {...animMoney(annualIncome)} accent="positive" sub={`${show(Math.round(annualIncome / 12))} / month`} />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard label="Annual Expenses" {...animMoney(annualExpenses)} accent="negative" sub={`${show(Math.round(annualExpenses / 12))} / month`} />
+        </StaggerItem>
+        <StaggerItem>
+          <StatCard label="Annual Net Cash Flow" {...animMoney(annualIncome - annualExpenses)} accent={annualIncome - annualExpenses >= 0 ? "positive" : "negative"} />
         </StaggerItem>
       </Stagger>
 

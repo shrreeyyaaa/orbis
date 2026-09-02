@@ -1,9 +1,8 @@
 "use client";
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useScope } from "@/components/scope-context";
-import { useNewParam } from "@/lib/use-new-param";
 import { toast } from "@/components/ui/use-toast";
 import { useCurrency } from "@/components/currency-context";
 import { PageHeader, StatCard } from "@/components/ui-bits";
@@ -50,6 +49,7 @@ export function CashflowView({
   expenses: Expense[];
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { includesOwner } = useScope();
   const { show, reportingCurrency, rates } = useCurrency();
   const ownerName = useMemo(() => new Map(owners.map((o) => [o.id, o.name])), [owners]);
@@ -58,10 +58,22 @@ export function CashflowView({
   const [editIncome, setEditIncome] = useState<IncomeSource | null>(null);
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [editExpense, setEditExpense] = useState<Expense | null>(null);
-  useNewParam(() => {
-    setEditIncome(null);
-    setIncomeOpen(true);
-  });
+  const requestedView = searchParams.get("view") === "expenses" ? "expenses" : "income";
+  const [activeView, setActiveView] = useState<"income" | "expenses">(requestedView);
+
+  useEffect(() => {
+    setActiveView(requestedView);
+    const newItem = searchParams.get("new");
+    if (newItem === "expense") {
+      setEditExpense(null);
+      setExpenseOpen(true);
+      router.replace("/cashflow?view=expenses", { scroll: false });
+    } else if (newItem === "income" || newItem === "1") {
+      setEditIncome(null);
+      setIncomeOpen(true);
+      router.replace("/cashflow?view=income", { scroll: false });
+    }
+  }, [requestedView, router, searchParams]);
 
   const visIncome = incomeSources.filter((s) => includesOwner(s.owner_id));
   const visExpenses = expenses.filter((e) => includesOwner(e.owner_id));
@@ -95,7 +107,11 @@ export function CashflowView({
         />
       </div>
 
-      <Tabs defaultValue="income">
+      <Tabs value={activeView} onValueChange={(value) => {
+        const view = value === "expenses" ? "expenses" : "income";
+        setActiveView(view);
+        router.replace(`/cashflow?view=${view}`, { scroll: false });
+      }}>
         <TabsList>
           <TabsTrigger value="income">Income ({visIncome.length})</TabsTrigger>
           <TabsTrigger value="expenses">Expenses ({visExpenses.length})</TabsTrigger>

@@ -8,7 +8,8 @@ import {
   TrendingUp,
   Landmark,
   CreditCard,
-  ArrowDownUp,
+  CircleDollarSign,
+  ReceiptText,
   Target,
   Users,
 } from "lucide-react";
@@ -18,7 +19,8 @@ const ITEMS = [
   { href: "/investments?new=1", label: "Holding", icon: TrendingUp },
   { href: "/assets?new=1", label: "Asset", icon: Landmark },
   { href: "/liabilities?new=1", label: "Liability", icon: CreditCard },
-  { href: "/cashflow?new=1", label: "Income / Expense", icon: ArrowDownUp },
+  { href: "/cashflow?view=income&new=income", label: "Income", icon: CircleDollarSign },
+  { href: "/cashflow?view=expenses&new=expense", label: "Expense", icon: ReceiptText },
   { href: "/goals?new=1", label: "Goal", icon: Target },
   { href: "/family?new=1", label: "Family / Entity", icon: Users },
 ];
