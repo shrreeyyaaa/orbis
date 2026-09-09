@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getHouseholdContext } from "@/lib/household";
 import { createClient } from "@/lib/supabase/server";
@@ -19,13 +20,15 @@ export default async function InsightsPage() {
   ]);
 
   return (
-    <InsightsView
-      owners={ctx.owners}
-      portfolio={portfolio}
-      valuations={valuations}
-      incomeSources={(income.data ?? []) as IncomeSource[]}
-      expenses={(expenses.data ?? []) as Expense[]}
-      goals={(goals.data ?? []) as Goal[]}
-    />
+    <Suspense>
+      <InsightsView
+        owners={ctx.owners}
+        portfolio={portfolio}
+        valuations={valuations}
+        incomeSources={(income.data ?? []) as IncomeSource[]}
+        expenses={(expenses.data ?? []) as Expense[]}
+        goals={(goals.data ?? []) as Goal[]}
+      />
+    </Suspense>
   );
 }

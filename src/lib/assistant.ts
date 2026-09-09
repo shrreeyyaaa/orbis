@@ -101,6 +101,8 @@ export async function callLLM(messages: ChatMessage[], s: FinancialSnapshot): Pr
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const sys = systemPrompt(s);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
 
   try {
     if (openaiKey) {
@@ -112,6 +114,7 @@ export async function callLLM(messages: ChatMessage[], s: FinancialSnapshot): Pr
           temperature: 0.2,
           messages: [{ role: "system", content: sys }, ...messages],
         }),
+        signal: controller.signal,
       });
       if (!res.ok) return null;
       const json = await res.json();
@@ -132,6 +135,7 @@ export async function callLLM(messages: ChatMessage[], s: FinancialSnapshot): Pr
           system: sys,
           messages: messages.map((m) => ({ role: m.role, content: m.content })),
         }),
+        signal: controller.signal,
       });
       if (!res.ok) return null;
       const json = await res.json();
@@ -139,10 +143,18 @@ export async function callLLM(messages: ChatMessage[], s: FinancialSnapshot): Pr
     }
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
   return null;
 }
 
 export function hasLLM(): boolean {
   return Boolean(process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY);
+}
+
+export function configuredLLMProvider(): "OpenAI" | "Anthropic" | null {
+  if (process.env.OPENAI_API_KEY) return "OpenAI";
+  if (process.env.ANTHROPIC_API_KEY) return "Anthropic";
+  return null;
 }

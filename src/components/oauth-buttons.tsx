@@ -45,29 +45,29 @@ export function OAuthButtons({ next }: { next?: string | null }) {
       setError(error.message);
       setLoading(null);
     }
-    // on success the browser is redirected to the provider
   }
+
+  const btnClass = "w-full bg-muted/40 text-foreground";
 
   return (
     <div className="space-y-3">
       <div className="grid gap-2">
-        <Button variant="outline" className="w-full" onClick={() => signIn("google")} disabled={loading !== null}>
+        <Button variant="outline" className={btnClass} onClick={() => signIn("google")} disabled={loading !== null}>
           <GoogleIcon />
           {loading === "google" ? "Redirecting…" : "Continue with Google"}
         </Button>
         {SHOW_APPLE && (
-          <Button variant="outline" className="w-full" onClick={() => signIn("apple")} disabled={loading !== null}>
+          <Button variant="outline" className={btnClass} onClick={() => signIn("apple")} disabled={loading !== null}>
             <AppleIcon />
             {loading === "apple" ? "Redirecting…" : "Continue with Apple"}
           </Button>
         )}
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <div className="relative text-center">
-        <span className="bg-background px-2 text-xs uppercase tracking-wide text-muted-foreground">
-          or
-        </span>
-        <div className="absolute inset-x-0 top-1/2 -z-10 h-px bg-border" />
+      <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground">
+        <span aria-hidden className="h-px flex-1 bg-border" />
+        <span>or</span>
+        <span aria-hidden className="h-px flex-1 bg-border" />
       </div>
     </div>
   );

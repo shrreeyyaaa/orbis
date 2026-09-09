@@ -4,6 +4,8 @@
 
 export interface MonteCarloInput {
   startMinor: number;
+  /** Debt held constant while investable assets receive simulated returns. */
+  liabilitiesMinor?: number;
   years: number;
   runs: number;
   expectedReturnPct: number;
@@ -63,6 +65,7 @@ function percentile(sorted: number[], p: number): number {
 export function runMonteCarlo(input: MonteCarloInput): MonteCarloResult {
   const {
     startMinor,
+    liabilitiesMinor = 0,
     years,
     runs,
     expectedReturnPct,
@@ -82,12 +85,12 @@ export function runMonteCarlo(input: MonteCarloInput): MonteCarloResult {
   const balancesByYear: number[][] = Array.from({ length: years + 1 }, () => []);
 
   for (let r = 0; r < runs; r++) {
-    let balance = startMinor;
-    balancesByYear[0].push(balance);
+    let assetBalance = startMinor + liabilitiesMinor;
+    balancesByYear[0].push(startMinor);
     for (let y = 1; y <= years; y++) {
       const ret = mean + sd * normal(rng);
-      balance = balance * (1 + ret) + annualContribution;
-      balancesByYear[y].push(balance);
+      assetBalance = assetBalance * (1 + ret) + annualContribution;
+      balancesByYear[y].push(assetBalance - liabilitiesMinor);
     }
   }
 

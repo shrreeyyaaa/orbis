@@ -116,10 +116,12 @@ export function LiabilitiesView({
                     </p>
                   )}
                   <div className="mt-3 flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => { setEditing(l); setOpen(true); }}>
+                    <Button aria-label={`Edit ${l.name}`} title={`Edit ${l.name}`} variant="ghost" size="icon" onClick={() => { setEditing(l); setOpen(true); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
+                      aria-label={`Delete ${l.name}`}
+                      title={`Delete ${l.name}`}
                       variant="ghost"
                       size="icon"
                       onClick={async () => {

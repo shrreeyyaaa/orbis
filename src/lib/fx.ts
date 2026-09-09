@@ -40,8 +40,9 @@ export function getRate(map: RateMap, from: string, to: string): number | null {
 }
 
 /**
- * Convert minor units of `from` into minor units of `to`. If the rate is
- * unknown, treats it as 1:1 but flags via the returned `missingRate`.
+ * Convert minor units of `from` into minor units of `to`. Unknown rates are
+ * excluded from aggregates instead of being presented as a misleading 1:1
+ * conversion. Callers can use `missingRate` to disclose an incomplete total.
  */
 export function convert(
   minor: number,
@@ -54,14 +55,14 @@ export function convert(
   const fromDigits = getMinorDigits(from);
   const toDigits = getMinorDigits(to);
   const major = minor / 10 ** fromDigits;
-  const converted = major * (rate ?? 1);
+  const converted = rate == null ? 0 : major * rate;
   return {
     value: Math.round(converted * 10 ** toDigits),
     missingRate: rate == null,
   };
 }
 
-/** Convenience: convert and return only the value (1:1 fallback). */
+/** Convenience: convert and return only the value (0 when unavailable). */
 export function toBase(minor: number, from: string, to: string, map: RateMap): number {
   return convert(minor, from, to, map).value;
 }

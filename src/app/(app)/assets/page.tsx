@@ -3,6 +3,7 @@ import { getHouseholdContext } from "@/lib/household";
 import { createClient } from "@/lib/supabase/server";
 import { AssetsView } from "./assets-view";
 import type { Asset } from "@/lib/types";
+import { PageInsightsRail } from "@/components/page-insights-rail";
 
 export default async function AssetsPage() {
   const ctx = await getHouseholdContext();
@@ -16,10 +17,13 @@ export default async function AssetsPage() {
     .order("current_value_minor", { ascending: false });
 
   return (
-    <AssetsView
+    <>
+      <PageInsightsRail scope="allocation" title="Asset insights" />
+      <AssetsView
       householdId={ctx.household.id}
       owners={ctx.owners}
       assets={(data ?? []) as Asset[]}
     />
+    </>
   );
 }

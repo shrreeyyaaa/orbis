@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 type CookieToSet = { name: string; value: string; options?: CookieOptions };
 
-const PUBLIC_PATHS = ["/login", "/signup", "/auth/callback", "/invite"];
+const PUBLIC_PATHS = ["/login", "/signup", "/auth/callback", "/invite", "/service-unavailable"];
 
 export async function updateSession(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -76,6 +76,13 @@ export async function updateSession(request: NextRequest) {
 
     return response;
   } catch {
-    return NextResponse.next();
+    const path = request.nextUrl.pathname;
+    const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
+    if (isPublic) return NextResponse.next();
+
+    const unavailableUrl = request.nextUrl.clone();
+    unavailableUrl.pathname = "/service-unavailable";
+    unavailableUrl.search = "";
+    return NextResponse.redirect(unavailableUrl);
   }
 }

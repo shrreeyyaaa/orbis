@@ -1,4 +1,5 @@
 "use client";
+import { cloneElement, isValidElement, useId } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,11 +21,19 @@ export function Field({
   children: React.ReactNode;
   hint?: string;
 }) {
+  const fieldId = useId();
+  const hintId = hint ? `${fieldId}-hint` : undefined;
+  const control = isValidElement(children)
+    ? cloneElement(children as React.ReactElement<any>, {
+        id: fieldId,
+        ...(hintId ? { "aria-describedby": hintId } : {}),
+      })
+    : children;
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
-      {children}
-      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      <Label htmlFor={fieldId}>{label}</Label>
+      {control}
+      {hint && <p id={hintId} className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -44,10 +53,15 @@ export function MoneyInput({
   onCurrency: (v: string) => void;
   hint?: string;
 }) {
+  const amountId = useId();
+  const hintId = hint ? `${amountId}-hint` : undefined;
   return (
-    <Field label={label} hint={hint}>
+    <div className="space-y-1.5">
+      <Label htmlFor={amountId}>{label}</Label>
       <div className="flex gap-2">
         <Input
+          id={amountId}
+          aria-describedby={hintId}
           inputMode="decimal"
           placeholder="0.00"
           value={amount}
@@ -55,7 +69,7 @@ export function MoneyInput({
           className="flex-1"
         />
         <Select value={currency} onValueChange={onCurrency}>
-          <SelectTrigger className="w-[100px]">
+          <SelectTrigger aria-label={`${label} currency`} className="w-[100px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -67,20 +81,25 @@ export function MoneyInput({
           </SelectContent>
         </Select>
       </div>
-    </Field>
+      {hint && <p id={hintId} className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
   );
 }
 
 export function CurrencySelect({
   value,
   onChange,
+  id,
+  "aria-describedby": ariaDescribedBy,
 }: {
   value: string;
   onChange: (v: string) => void;
+  id?: string;
+  "aria-describedby"?: string;
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger>
+      <SelectTrigger id={id} aria-describedby={ariaDescribedBy}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -99,15 +118,19 @@ export function OwnerSelect({
   value,
   onChange,
   allowNone,
+  id,
+  "aria-describedby": ariaDescribedBy,
 }: {
   owners: Owner[];
   value: string;
   onChange: (v: string) => void;
   allowNone?: boolean;
+  id?: string;
+  "aria-describedby"?: string;
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger>
+      <SelectTrigger id={id} aria-describedby={ariaDescribedBy}>
         <SelectValue placeholder="Select owner" />
       </SelectTrigger>
       <SelectContent>
@@ -127,15 +150,19 @@ export function EnumSelect<T extends string>({
   onChange,
   options,
   placeholder,
+  id,
+  "aria-describedby": ariaDescribedBy,
 }: {
   value: T;
   onChange: (v: T) => void;
   options: Record<string, string>;
   placeholder?: string;
+  id?: string;
+  "aria-describedby"?: string;
 }) {
   return (
     <Select value={value} onValueChange={(v) => onChange(v as T)}>
-      <SelectTrigger>
+      <SelectTrigger id={id} aria-describedby={ariaDescribedBy}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

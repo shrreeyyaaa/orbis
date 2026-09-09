@@ -84,8 +84,13 @@ export function CashflowView({
       (sum, s) => sum + toBase(annualize(s.expected_amount_minor, s.cadence), s.currency, reportingCurrency, rates),
       0,
     );
+  const currentYear = String(new Date().getFullYear());
   const annualExpenses = visExpenses.reduce((sum, e) => {
-    const amt = e.is_recurring && e.cadence ? annualize(e.amount_minor, e.cadence) : e.amount_minor;
+    const amt = e.is_recurring && e.cadence
+      ? annualize(e.amount_minor, e.cadence)
+      : e.spent_on.startsWith(currentYear)
+        ? e.amount_minor
+        : 0;
     return sum + toBase(amt, e.currency, reportingCurrency, rates);
   }, 0);
 
@@ -143,6 +148,15 @@ export function CashflowView({
                     toast({ title: "Income stream deleted" });
                     router.refresh();
                   }}
+                  extra={
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-primary hover:underline"
+                      onClick={() => router.push("/goals")}
+                    >
+                      Allocate to goal
+                    </button>
+                  }
                 />
               ))}
             </div>
@@ -234,6 +248,7 @@ function Row({
   inactive,
   onEdit,
   onDelete,
+  extra,
 }: {
   title: string;
   subtitle: string;
@@ -243,6 +258,7 @@ function Row({
   inactive?: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  extra?: React.ReactNode;
 }) {
   return (
     <Card>
@@ -253,15 +269,16 @@ function Row({
             {inactive && <Badge variant="secondary">Inactive</Badge>}
           </div>
           <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+          {extra && <div className="mt-1">{extra}</div>}
         </div>
         <div className="text-right">
-          <p className={`text-sm font-semibold tabular-nums ${positive ? "text-success" : ""}`}>{amount}</p>
+          <p className={`text-sm font-semibold tabular-nums font-mono ${positive ? "text-success" : ""}`}>{amount}</p>
           {amountSub && <p className="text-xs text-muted-foreground">{amountSub}</p>}
         </div>
-        <Button variant="ghost" size="icon" onClick={onEdit}>
+        <Button aria-label={`Edit ${title}`} title={`Edit ${title}`} variant="ghost" size="icon" onClick={onEdit}>
           <Pencil className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={onDelete}>
+        <Button aria-label={`Delete ${title}`} title={`Delete ${title}`} variant="ghost" size="icon" onClick={onDelete}>
           <Trash2 className="h-4 w-4" />
         </Button>
       </CardContent>
@@ -304,7 +321,7 @@ function IncomeDialog({
       currency,
       expected_amount_minor: Number(toMinor(amount || "0", currency)),
       cadence,
-      is_active: true,
+      is_active: source?.is_active ?? true,
     };
     const supabase = createClient();
     const { error } = source

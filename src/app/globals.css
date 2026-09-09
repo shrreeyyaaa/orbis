@@ -4,58 +4,66 @@
 
 @layer base {
   :root {
-    /* Ivory & Ink - private-bank luxury, light */
-    --background: 40 30% 97%;
-    --foreground: 222 44% 12%;
+    /* Light — cool slate + emerald (not cream SaaS) */
+    --background: 210 24% 97%;
+    --foreground: 222 40% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 222 44% 12%;
+    --card-foreground: 222 40% 9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 44% 12%;
-    --primary: 218 46% 19%;
-    --primary-foreground: 40 33% 96%;
-    --secondary: 40 24% 93%;
-    --secondary-foreground: 218 40% 18%;
-    --muted: 40 20% 94%;
-    --muted-foreground: 220 12% 42%;
-    --accent: 40 38% 90%;
-    --accent-foreground: 218 40% 18%;
-    --destructive: 4 58% 46%;
-    --destructive-foreground: 40 33% 96%;
-    --success: 152 40% 34%;
-    --success-foreground: 40 33% 96%;
-    --gold: 38 52% 48%;
-    --gold-foreground: 222 44% 12%;
-    --border: 40 16% 86%;
-    --input: 40 16% 86%;
-    --ring: 38 52% 48%;
-    --radius: 0.625rem;
+    --popover-foreground: 222 40% 9%;
+    --primary: 158 64% 32%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 20% 94%;
+    --secondary-foreground: 222 30% 16%;
+    --muted: 210 18% 94%;
+    --muted-foreground: 215 14% 40%;
+    --accent: 158 35% 93%;
+    --accent-foreground: 158 50% 18%;
+    --destructive: 4 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 55% 32%;
+    --success-foreground: 0 0% 100%;
+    --gold: 38 70% 42%;
+    --gold-foreground: 222 40% 9%;
+    --orbit: 158 64% 36%;
+    --orbit-foreground: 0 0% 100%;
+    --border: 214 18% 88%;
+    --input: 214 18% 88%;
+    --ring: 158 64% 36%;
+    --radius: 0.875rem;
+    --shell: 0 0% 100%;
+    --shell-fg: 222 40% 9%;
   }
 
   .dark {
-    /* Midnight & Gold - private-bank luxury, dark */
-    --background: 222 44% 8%;
-    --foreground: 40 33% 92%;
-    --card: 222 40% 11%;
-    --card-foreground: 40 33% 92%;
-    --popover: 222 40% 11%;
-    --popover-foreground: 40 33% 92%;
-    --primary: 38 52% 52%;
-    --primary-foreground: 222 47% 10%;
-    --secondary: 222 30% 16%;
-    --secondary-foreground: 40 33% 92%;
-    --muted: 222 28% 16%;
-    --muted-foreground: 220 14% 64%;
-    --accent: 222 30% 18%;
-    --accent-foreground: 40 33% 92%;
-    --destructive: 4 56% 50%;
-    --destructive-foreground: 40 33% 96%;
-    --success: 152 42% 44%;
-    --success-foreground: 222 47% 10%;
-    --gold: 38 58% 56%;
-    --gold-foreground: 222 47% 10%;
-    --border: 222 26% 20%;
-    --input: 222 26% 20%;
-    --ring: 38 58% 56%;
+    /* Dark — deep ink + emerald */
+    --background: 222 48% 5%;
+    --foreground: 210 24% 96%;
+    --card: 222 40% 8%;
+    --card-foreground: 210 24% 96%;
+    --popover: 222 40% 8%;
+    --popover-foreground: 210 24% 96%;
+    --primary: 158 64% 42%;
+    --primary-foreground: 158 80% 6%;
+    --secondary: 222 28% 12%;
+    --secondary-foreground: 210 24% 94%;
+    --muted: 222 26% 12%;
+    --muted-foreground: 215 12% 58%;
+    --accent: 158 30% 14%;
+    --accent-foreground: 158 60% 72%;
+    --destructive: 4 72% 55%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 152 55% 45%;
+    --success-foreground: 152 80% 6%;
+    --gold: 38 70% 55%;
+    --gold-foreground: 222 47% 8%;
+    --orbit: 158 64% 48%;
+    --orbit-foreground: 158 80% 6%;
+    --border: 222 20% 16%;
+    --input: 222 20% 16%;
+    --ring: 158 64% 42%;
+    --shell: 222 42% 7%;
+    --shell-fg: 210 24% 96%;
   }
 }
 
@@ -70,13 +78,23 @@
   h1, h2, h3, .font-display {
     font-feature-settings: "liga" 1, "dlig" 1;
   }
+  .font-mono-nums {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @layer utilities {
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
-  /* gold hairline accent used on premium cards */
+  .orbit-rule {
+    background-image: linear-gradient(
+      to right,
+      hsl(var(--orbit) / 0.95),
+      hsl(var(--orbit) / 0.08)
+    );
+  }
   .gold-rule {
     background-image: linear-gradient(
       to right,
@@ -87,34 +105,62 @@
   .text-gold {
     color: hsl(var(--gold));
   }
+  .text-orbit {
+    color: hsl(var(--orbit));
+  }
+  .bg-orbit {
+    background-color: hsl(var(--orbit));
+  }
 
-  /* Subtle hover lift for interactive cards */
   .card-hover {
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    will-change: transform;
   }
   .card-hover:hover {
     transform: translateY(-2px);
-    box-shadow:
-      0 1px 2px hsl(222 44% 11% / 0.04),
-      0 12px 28px -12px hsl(222 44% 11% / 0.18);
-    border-color: hsl(var(--gold) / 0.35);
+    box-shadow: 0 18px 40px -20px hsl(158 60% 20% / 0.25);
+    border-color: hsl(var(--orbit) / 0.35);
   }
 
-  /* Layered elevation for hero / key cards */
   .elev {
     box-shadow:
-      0 1px 2px hsl(222 44% 11% / 0.05),
-      0 18px 40px -20px hsl(222 44% 11% / 0.22);
+      0 1px 0 hsl(0 0% 100% / 0.04) inset,
+      0 20px 50px -28px hsl(222 40% 10% / 0.35);
+  }
+  .dark .elev {
+    box-shadow:
+      0 1px 0 hsl(0 0% 100% / 0.04) inset,
+      0 24px 60px -30px hsl(0 0% 0% / 0.65);
   }
 
   .glass {
-    background-color: hsl(var(--card) / 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background-color: hsl(var(--card) / 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
-  /* Skeleton shimmer */
+  .panel {
+    @apply rounded-2xl border bg-card elev;
+  }
+
+  .mesh-bg {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(120% 80% at 10% 0%, hsl(var(--orbit) / 0.12), transparent 55%),
+      radial-gradient(90% 70% at 90% 20%, hsl(210 50% 40% / 0.1), transparent 50%);
+  }
+
+  .noise-overlay {
+    position: relative;
+  }
+  .noise-overlay::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
   .skeleton {
     position: relative;
     overflow: hidden;
@@ -133,6 +179,75 @@
     );
     animation: shimmer 1.6s infinite;
   }
+
+  .privacy-mode .tabular-nums,
+  .privacy-mode .font-mono-nums,
+  .privacy-mode .privacy-sensitive {
+    filter: blur(0.42rem);
+    user-select: none;
+    transition: filter 160ms ease;
+  }
+
+  .atlas-surface {
+    background-image:
+      radial-gradient(circle at 50% 50%, hsl(var(--orbit) / 0.11), transparent 28%),
+      linear-gradient(145deg, hsl(var(--card)), hsl(var(--background) / 0.88));
+    box-shadow: 0 26px 70px -48px hsl(var(--orbit) / 0.7);
+  }
+  .atlas-orbit {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    border: 1px solid hsl(var(--orbit) / 0.14);
+    border-radius: 9999px;
+    transform: translate(-50%, -50%) rotate(-11deg);
+  }
+  .atlas-orbit-outer { width: 76%; height: 78%; }
+  .atlas-orbit-inner { width: 46%; height: 52%; border-color: hsl(var(--gold) / 0.13); transform: translate(-50%, -50%) rotate(14deg); }
+  .atlas-crosshair {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0.35rem;
+    height: 0.35rem;
+    border-radius: 9999px;
+    background: hsl(var(--orbit));
+    box-shadow: 0 0 0 0.4rem hsl(var(--orbit) / 0.08), 0 0 2.5rem hsl(var(--orbit) / 0.35);
+    transform: translate(-50%, -50%);
+  }
+  .atlas-node {
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 7.25rem;
+    min-height: 4.8rem;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid hsl(var(--border) / 0.9);
+    border-radius: 1rem;
+    background: hsl(var(--card) / 0.93);
+    box-shadow: 0 14px 32px -24px hsl(222 50% 4% / 0.75);
+    transform: translate(-50%, -50%);
+    transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+  }
+  .atlas-node:hover,
+  .atlas-node:focus-visible {
+    border-color: hsl(var(--orbit) / 0.55);
+    box-shadow: 0 18px 42px -24px hsl(var(--orbit) / 0.55);
+    transform: translate(-50%, -50%) scale(1.035);
+    outline: none;
+  }
+  .atlas-center {
+    min-width: 10.5rem;
+    min-height: 7rem;
+    border-radius: 9999px;
+    border-color: hsl(var(--orbit) / 0.35);
+    background: radial-gradient(circle at 50% 25%, hsl(var(--orbit) / 0.17), hsl(var(--card)) 68%);
+  }
+  .atlas-owner { border-color: hsl(var(--gold) / 0.25); }
+  .atlas-group { border-color: hsl(var(--orbit) / 0.24); }
 }
 
 @keyframes shimmer {
@@ -141,7 +256,6 @@
   }
 }
 
-/* Respect users who prefer less motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -158,7 +272,6 @@
   }
 }
 
-/* Subtle one-shot celebration animation for milestones */
 @keyframes confetti-fall {
   0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
   100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }

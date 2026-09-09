@@ -142,7 +142,7 @@ export function MembersInvites({
                       {copied === inv.token ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
                       {copied === inv.token ? "Copied" : "Copy link"}
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => revoke(inv.id)} title="Revoke">
+                    <Button aria-label={`Revoke invitation for ${inv.email}`} variant="ghost" size="icon" onClick={() => revoke(inv.id)} title="Revoke">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

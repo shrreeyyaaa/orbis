@@ -324,6 +324,8 @@ export function SimulateView({
                     />
                   </Field>
                   <Button
+                    aria-label={`Remove ${h.label}`}
+                    title={`Remove ${h.label}`}
                     variant="ghost"
                     size="icon"
                     onClick={() => setHypos((prev) => prev.filter((x) => x.id !== h.id))}
@@ -337,7 +339,11 @@ export function SimulateView({
         </TabsContent>
 
         <TabsContent value="montecarlo">
-          <MonteCarloTab startMinor={nw.netWorthMinor} byGroup={nw.byGroup} />
+          <MonteCarloTab
+            startMinor={nw.netWorthMinor}
+            liabilitiesMinor={nw.totalLiabilitiesMinor}
+            byGroup={nw.byGroup}
+          />
         </TabsContent>
 
         <TabsContent value="fx">
@@ -354,9 +360,11 @@ export function SimulateView({
 
 function MonteCarloTab({
   startMinor,
+  liabilitiesMinor,
   byGroup,
 }: {
   startMinor: number;
+  liabilitiesMinor: number;
   byGroup: NetWorthResult["byGroup"];
 }) {
   const { reportingCurrency, displayCurrency, show, toDisplay } = useCurrency();
@@ -379,6 +387,7 @@ function MonteCarloTab({
     () =>
       runMonteCarlo({
         startMinor,
+        liabilitiesMinor,
         years,
         runs,
         expectedReturnPct: expReturn,
@@ -387,7 +396,7 @@ function MonteCarloTab({
         inflationPct: inflation,
         targetMinor: target ? Number(toMinor(target, reportingCurrency)) : null,
       }),
-    [startMinor, years, runs, expReturn, vol, contribution, inflation, target, reportingCurrency],
+    [startMinor, liabilitiesMinor, years, runs, expReturn, vol, contribution, inflation, target, reportingCurrency],
   );
 
   const fan = result.points.map((p) => ({
@@ -534,8 +543,6 @@ function FxWhatIf({
   const breakEven = breakEvenRate(spot, baseInfl, quoteInfl, years);
   const sensitivity = fxSensitivity(amountMajor, spot);
 
-  const fmtFrom = (major: number) =>
-    formatMoney(Math.round(major * 10 ** getMinorDigits(from)), from);
   const fmtTo = (major: number) =>
     formatMoney(Math.round(major * 10 ** getMinorDigits(to)), to);
 

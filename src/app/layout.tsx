@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { DM_Sans, Fraunces, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 
-const inter = Inter({
+const dmSans = DM_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
@@ -13,6 +13,12 @@ const inter = Inter({
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-serif",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
   display: "swap",
 });
 
@@ -27,9 +33,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${fraunces.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${dmSans.variable} ${fraunces.variable} ${jetbrainsMono.variable}`}
+    >
       <body className="min-h-screen font-sans antialiased">
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
           <Toaster />
         </ThemeProvider>

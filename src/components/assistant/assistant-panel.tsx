@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, X, Send, Info } from "lucide-react";
+import { Cloud, Sparkles, X, Send, Info, ShieldCheck } from "lucide-react";
 import type { ChatMessage } from "@/lib/assistant";
 
 export const OPEN_ASSISTANT_EVENT = "orbis:open-assistant";
@@ -21,6 +21,9 @@ export function AssistantPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [allowCloud, setAllowCloud] = useState(false);
+  const [responseMode, setResponseMode] = useState<"local" | "cloud">("local");
+  const [provider, setProvider] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,9 +47,11 @@ export function AssistantPanel() {
       const res = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({ messages: next, allowCloud }),
       });
       const json = await res.json();
+      setResponseMode(json.mode === "cloud" ? "cloud" : "local");
+      setProvider(typeof json.provider === "string" ? json.provider : null);
       setMessages((m) => [...m, { role: "assistant", content: json.reply ?? json.error ?? "Something went wrong." }]);
     } catch {
       setMessages((m) => [...m, { role: "assistant", content: "I couldn't reach the server. Please try again." }]);
@@ -60,6 +65,7 @@ export function AssistantPanel() {
       {open && (
         <>
           <motion.div
+            aria-hidden
             className="fixed inset-0 z-50 bg-black/40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -67,6 +73,9 @@ export function AssistantPanel() {
             onClick={() => setOpen(false)}
           />
           <motion.aside
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ask-orbis-title"
             className="fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col border-l bg-card shadow-xl"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
@@ -77,20 +86,27 @@ export function AssistantPanel() {
               <div className="rounded-lg bg-gold/15 p-1.5 text-gold">
                 <Sparkles className="h-4 w-4" />
               </div>
-              <span className="font-serif text-lg font-semibold">Ask Orbis</span>
-              <Button variant="ghost" size="icon" className="ml-auto" onClick={() => setOpen(false)}>
+              <span id="ask-orbis-title" className="font-serif text-lg font-semibold">Ask Orbis</span>
+              <span className={`ml-1 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] ${responseMode === "cloud" ? "bg-sky-500/10 text-sky-600 dark:text-sky-300" : "bg-primary/10 text-primary"}`}>
+                {responseMode === "cloud" ? <Cloud className="h-3 w-3" aria-hidden /> : <ShieldCheck className="h-3 w-3" aria-hidden />}
+                {responseMode === "cloud" ? provider ?? "Cloud" : "Local"}
+              </span>
+              <Button aria-label="Close Ask Orbis" title="Close" variant="ghost" size="icon" className="ml-auto" onClick={() => setOpen(false)}>
                 <X className="h-4 w-4" />
               </Button>
             </header>
 
-            <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
+            <div ref={scrollRef} aria-live="polite" className="flex-1 space-y-4 overflow-y-auto p-4">
               {messages.length === 0 && (
                 <div className="space-y-4">
                   <div className="flex items-start gap-2 rounded-lg bg-accent/60 p-3 text-xs text-muted-foreground">
                     <Info className="mt-0.5 h-4 w-4 shrink-0" />
-                    Ask about your own finances - net worth, allocation, goals, cash flow, and more.
-                    Answers are informational only, not financial advice.
+                    Local mode analyzes the household snapshot inside Orbis. Cloud mode sends the current financial snapshot and this conversation to the configured AI provider. Answers are informational only, not financial advice.
                   </div>
+                  <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-border/70 bg-background/40 p-3 text-xs">
+                    <input type="checkbox" checked={allowCloud} onChange={(event) => setAllowCloud(event.target.checked)} className="mt-0.5 h-4 w-4 accent-primary" />
+                    <span><strong className="block text-foreground">Allow cloud AI for this conversation</strong><span className="mt-0.5 block text-muted-foreground">Shares household names, holdings, goals and financial figures with the configured provider.</span></span>
+                  </label>
                   <div className="flex flex-wrap gap-2">
                     {SUGGESTIONS.map((s) => (
                       <button
@@ -136,12 +152,14 @@ export function AssistantPanel() {
               }}
             >
               <Input
+                aria-label="Message Ask Orbis"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about your finances…"
+                maxLength={2_000}
                 disabled={loading}
               />
-              <Button type="submit" size="icon" disabled={loading || !input.trim()}>
+              <Button aria-label="Send message" title="Send message" type="submit" size="icon" disabled={loading || !input.trim()}>
                 <Send className="h-4 w-4" />
               </Button>
             </form>

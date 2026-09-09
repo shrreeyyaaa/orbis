@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useNewParam } from "@/lib/use-new-param";
 import { toast } from "@/components/ui/use-toast";
@@ -38,12 +38,25 @@ export function FamilyView({
   owners: Owner[];
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const focusedOwnerId = searchParams.get("focus");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Owner | null>(null);
   useNewParam(() => {
     setEditing(null);
     setOpen(true);
   });
+
+  useEffect(() => {
+    if (!focusedOwnerId) return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(`owner-${focusedOwnerId}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [focusedOwnerId]);
 
   function openNew() {
     setEditing(null);
@@ -82,8 +95,8 @@ export function FamilyView({
         />
       ) : (
         <div className="space-y-6">
-          <Section title="Family members" items={people} onEdit={openEdit} />
-          <Section title="Trusts, LLCs & legal entities" items={entities} onEdit={openEdit} />
+          <Section title="Family members" items={people} onEdit={openEdit} focusedOwnerId={focusedOwnerId} />
+          <Section title="Trusts, LLCs & legal entities" items={entities} onEdit={openEdit} focusedOwnerId={focusedOwnerId} />
         </div>
       )}
 
@@ -107,10 +120,12 @@ function Section({
   title,
   items,
   onEdit,
+  focusedOwnerId,
 }: {
   title: string;
   items: Owner[];
   onEdit: (o: Owner) => void;
+  focusedOwnerId: string | null;
 }) {
   if (items.length === 0) return null;
   return (
@@ -120,7 +135,11 @@ function Section({
         {items.map((o) => {
           const Icon = kindIcon(o.kind);
           return (
-            <Card key={o.id}>
+            <Card
+              key={o.id}
+              id={`owner-${o.id}`}
+              className={focusedOwnerId === o.id ? "border-primary/55 bg-primary/5 ring-2 ring-primary/20" : undefined}
+            >
               <CardContent className="flex items-start gap-3 p-4">
                 <div
                   className="mt-0.5 rounded-lg p-2"
@@ -141,7 +160,7 @@ function Section({
                     <p className="mt-1 text-xs text-muted-foreground">{o.trust_type}</p>
                   )}
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => onEdit(o)}>
+                <Button aria-label={`Edit ${o.name}`} title={`Edit ${o.name}`} variant="ghost" size="icon" onClick={() => onEdit(o)}>
                   <Pencil className="h-4 w-4" />
                 </Button>
               </CardContent>

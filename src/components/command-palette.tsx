@@ -27,6 +27,7 @@ import {
   SunMoon,
   Lightbulb,
   Sparkles,
+  CalendarDays,
 } from "lucide-react";
 import { OPEN_ASSISTANT_EVENT } from "@/components/assistant/assistant-panel";
 
@@ -34,6 +35,7 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/net-worth", label: "Net Worth", icon: LineChart },
   { href: "/insights", label: "Insights", icon: Lightbulb },
+  { href: "/events", label: "Events", icon: CalendarDays },
   { href: "/accounts", label: "Accounts", icon: Wallet },
   { href: "/investments", label: "Investments", icon: TrendingUp },
   { href: "/assets", label: "Assets", icon: Landmark },

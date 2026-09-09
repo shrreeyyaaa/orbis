@@ -9,7 +9,7 @@ const TIER_COLOR: Record<Tier, string> = {
   Bronze: "#B5734A",
   Silver: "#8C97A8",
   Gold: "#C29A4E",
-  Platinum: "#3E7C86",
+  Platinum: "hsl(var(--orbit))",
 };
 
 export function ScoreRing({

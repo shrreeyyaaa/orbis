@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getHouseholdContext } from "@/lib/household";
 import { loadPortfolio, loadValuations } from "@/lib/load";
 import { NetWorthView } from "./net-worth-view";
+import { PageInsightsRail } from "@/components/page-insights-rail";
 
 export default async function NetWorthPage() {
   const ctx = await getHouseholdContext();
@@ -13,6 +14,9 @@ export default async function NetWorthPage() {
   ]);
 
   return (
-    <NetWorthView owners={ctx.owners} portfolio={portfolio} valuations={valuations} />
+    <>
+      <PageInsightsRail scope="allocation" title="Net worth insights" />
+      <NetWorthView owners={ctx.owners} portfolio={portfolio} valuations={valuations} />
+    </>
   );
 }

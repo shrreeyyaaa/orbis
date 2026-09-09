@@ -2,6 +2,17 @@ import { getMinorDigits } from "@/lib/currency";
 
 export type InsightSeverity = "critical" | "warn" | "info" | "positive";
 
+export type InsightScope =
+  | "all"
+  | "liquidity"
+  | "goals"
+  | "cashflow"
+  | "debt"
+  | "allocation"
+  | "estate"
+  | "investing"
+  | "data";
+
 export interface Insight {
   id: string;
   severity: InsightSeverity;
@@ -10,6 +21,23 @@ export interface Insight {
   category: string;
   href?: string;
   actionLabel?: string;
+}
+
+const SCOPE_CATEGORIES: Record<Exclude<InsightScope, "all">, string[]> = {
+  liquidity: ["Liquidity"],
+  goals: ["Goals"],
+  cashflow: ["Cash flow"],
+  debt: ["Liabilities"],
+  allocation: ["Investing", "Risk", "Milestone"],
+  estate: ["Estate"],
+  investing: ["Investing", "Risk"],
+  data: ["Data quality"],
+};
+
+export function filterInsightsByScope(insights: Insight[], scope: InsightScope): Insight[] {
+  if (scope === "all") return insights;
+  const cats = SCOPE_CATEGORIES[scope];
+  return insights.filter((i) => cats.includes(i.category));
 }
 
 export interface InsightGoal {
@@ -46,6 +74,10 @@ export interface InsightsInput {
   daysSinceUpdate: number | null;
   /** formats a reporting-currency minor amount. */
   fmt: (minor: number) => string;
+  /** monthly surplus (income - expenses) in reporting currency, if known */
+  monthlySurplusMinor?: number;
+  /** sum of planned monthly income allocations to goals */
+  monthlyAllocatedToGoalsMinor?: number;
 }
 
 export const SEVERITY_RANK: Record<InsightSeverity, number> = {
@@ -287,6 +319,26 @@ export function computeInsights(input: InsightsInput): Insight[] {
       title: "A milestone is within reach",
       detail: `You're about ${fmt(Math.round((next - nwMajor) * 10 ** digits))} away from ${fmt(next * 10 ** digits)} net worth.`,
     });
+  }
+
+  // 13. Unallocated surplus vs goal funding plan
+  if (
+    input.monthlySurplusMinor != null &&
+    input.monthlySurplusMinor > 0 &&
+    input.monthlyAllocatedToGoalsMinor != null
+  ) {
+    const unallocated = input.monthlySurplusMinor - input.monthlyAllocatedToGoalsMinor;
+    if (unallocated > input.monthlySurplusMinor * 0.15) {
+      out.push({
+        id: "unallocated-surplus",
+        severity: "info",
+        category: "Goals",
+        title: "Income surplus not assigned to goals",
+        detail: `About ${fmt(Math.round(unallocated))}/mo of surplus isn't allocated to a goal yet.`,
+        href: "/goals",
+        actionLabel: "Allocate income",
+      });
+    }
   }
 
   return out.sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]);

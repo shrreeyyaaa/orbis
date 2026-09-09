@@ -173,17 +173,19 @@ export function InvestmentsView({
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{h.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                           {h.quantity} @ {fromMinor(h.unit_price_minor, h.currency)} {h.currency}
-                          {" · "}
+                          <span aria-hidden>·</span>
                           <Badge variant="outline" className="ml-1">{ASSET_CLASS_LABELS[h.class]}</Badge>
-                        </p>
+                        </div>
                       </div>
                       <span className="text-sm tabular-nums">{show(holdingValue(h))}</span>
-                      <Button variant="ghost" size="icon" onClick={() => { setEditing(h); setOpen(true); }}>
+                      <Button aria-label={`Edit ${h.name}`} title={`Edit ${h.name}`} variant="ghost" size="icon" onClick={() => { setEditing(h); setOpen(true); }}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
+                        aria-label={`Delete ${h.name}`}
+                        title={`Delete ${h.name}`}
                         variant="ghost"
                         size="icon"
                         onClick={async () => {

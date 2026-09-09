@@ -10,18 +10,13 @@ export interface AchievementDef {
 }
 
 export const ACHIEVEMENTS: AchievementDef[] = [
-  { key: "foundation", title: "Foundation Laid", description: "Added your first account.", icon: "flag", category: "setup" },
-  { key: "diversified", title: "Diversified", description: "Hold assets across 4+ asset classes.", icon: "layers", category: "milestone" },
-  { key: "safety_net", title: "Safety Net", description: "Fully funded an emergency goal.", icon: "shield", category: "milestone" },
-  { key: "estate_minded", title: "Estate Minded", description: "Added a trust or LLC.", icon: "landmark", category: "setup" },
-  { key: "global_citizen", title: "Global Citizen", description: "Hold value in 2+ currencies.", icon: "globe", category: "milestone" },
-  { key: "goal_setter", title: "Goal Setter", description: "Set 3 or more goals.", icon: "target", category: "setup" },
-  { key: "in_the_black", title: "In the Black", description: "Positive annual net cash flow.", icon: "trending-up", category: "habit" },
-  { key: "nw_1m", title: "Millionaire", description: "Net worth crossed 1M.", icon: "gem", category: "milestone" },
-  { key: "nw_5m", title: "Five Comma", description: "Net worth crossed 5M.", icon: "gem", category: "milestone" },
-  { key: "nw_10m", title: "Eight Figures", description: "Net worth crossed 10M.", icon: "medal", category: "milestone" },
-  { key: "nw_25m", title: "Family Office", description: "Net worth crossed 25M.", icon: "award", category: "milestone" },
-  { key: "nw_100m", title: "Nine Figures", description: "Net worth crossed 100M.", icon: "crown", category: "milestone" },
+  { key: "foundation", title: "Foundation mapped", description: "At least one financial account is documented.", icon: "flag", category: "setup" },
+  { key: "diversified", title: "Diversification reviewed", description: "The household is represented across four or more asset classes.", icon: "layers", category: "milestone" },
+  { key: "safety_net", title: "Liquidity reserve funded", description: "The household emergency reserve is fully funded.", icon: "shield", category: "milestone" },
+  { key: "estate_minded", title: "Entity structure mapped", description: "A trust or company is represented in the ownership picture.", icon: "landmark", category: "setup" },
+  { key: "global_citizen", title: "Currency exposure recorded", description: "Assets or obligations in multiple currencies are documented.", icon: "globe", category: "milestone" },
+  { key: "goal_setter", title: "Planning priorities set", description: "Three or more household goals have been documented.", icon: "target", category: "setup" },
+  { key: "in_the_black", title: "Positive cash plan", description: "Expected annual income currently exceeds recorded outflow.", icon: "trending-up", category: "habit" },
 ];
 
 export const ACHIEVEMENTS_BY_KEY: Record<string, AchievementDef> = Object.fromEntries(
@@ -50,10 +45,5 @@ export function evaluateAchievements(ctx: AchievementContext): string[] {
   if (ctx.currencyCount >= 2) earned.push("global_citizen");
   if (ctx.goalCount >= 3) earned.push("goal_setter");
   if (ctx.positiveCashFlow) earned.push("in_the_black");
-  if (ctx.netWorthMajor >= 1_000_000) earned.push("nw_1m");
-  if (ctx.netWorthMajor >= 5_000_000) earned.push("nw_5m");
-  if (ctx.netWorthMajor >= 10_000_000) earned.push("nw_10m");
-  if (ctx.netWorthMajor >= 25_000_000) earned.push("nw_25m");
-  if (ctx.netWorthMajor >= 100_000_000) earned.push("nw_100m");
   return earned;
 }

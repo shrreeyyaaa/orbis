@@ -275,6 +275,49 @@ export interface Goal {
   notes: string | null;
 }
 
+export type AllocationMode = "pct" | "fixed";
+
+export interface GoalIncomeAllocation {
+  id: string;
+  household_id: string;
+  goal_id: string;
+  income_source_id: string;
+  mode: AllocationMode;
+  /** basis points when mode=pct (2500 = 25%) */
+  value_bps: number;
+  /** fixed monthly amount in income source currency when mode=fixed */
+  value_minor: number;
+  is_active: boolean;
+}
+
+export interface GoalContribution {
+  id: string;
+  household_id: string;
+  goal_id: string;
+  income_source_id: string | null;
+  amount_minor: number;
+  currency: string;
+  applied_on: string;
+  note: string | null;
+}
+
+export type FinancialEventKind =
+  | "achievement"
+  | "goal_completed"
+  | "contribution"
+  | "milestone"
+  | "manual";
+
+export interface FinancialEvent {
+  id: string;
+  household_id: string;
+  kind: FinancialEventKind;
+  title: string;
+  occurred_on: string;
+  goal_id: string | null;
+  meta: Record<string, unknown> | null;
+}
+
 export interface ExchangeRate {
   id: string;
   household_id: string;

@@ -1,6 +1,3 @@
-<<<<<<< HEAD
-# orbis
-=======
 # Orbis
 
 A net-worth tracker built for HNI / UHNI families in the US market. Track every
@@ -86,4 +83,3 @@ Live rates are fetched from the free, no-key ECB-backed Frankfurter API; you can
 also enter/override any rate manually in Settings.
 
 See `SETUP_GUIDE.md` for a deeper walkthrough.
->>>>>>> eaac39e (Deploy Orbis frontend with local mock database layer)

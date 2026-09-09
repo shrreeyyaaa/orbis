@@ -81,7 +81,7 @@ export function useScope() {
   return ctx;
 }
 
-export function ScopePicker() {
+export function ScopePicker({ className }: { className?: string }) {
   const { scope, setScope, owners } = useScope();
   const value = scope.kind === "owner" ? `owner:${scope.ownerId}` : "all";
 
@@ -92,8 +92,8 @@ export function ScopePicker() {
 
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-8 w-[170px] gap-1.5">
-        <Users className="h-3.5 w-3.5 opacity-60" />
+      <SelectTrigger className={`h-8 min-w-0 gap-1 px-2 ${className ?? "w-[170px]"}`}>
+        <Users className="h-3.5 w-3.5 shrink-0 opacity-60" />
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

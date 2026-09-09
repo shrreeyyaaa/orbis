@@ -3,6 +3,7 @@ import { getHouseholdContext } from "@/lib/household";
 import { createClient } from "@/lib/supabase/server";
 import { CashflowView } from "./cashflow-view";
 import type { Expense, IncomeSource } from "@/lib/types";
+import { PageInsightsRail } from "@/components/page-insights-rail";
 
 export default async function CashflowPage() {
   const ctx = await getHouseholdContext();
@@ -15,11 +16,14 @@ export default async function CashflowPage() {
   ]);
 
   return (
-    <CashflowView
+    <>
+      <PageInsightsRail scope="cashflow" title="Cash flow insights" />
+      <CashflowView
       householdId={ctx.household.id}
       owners={ctx.owners}
       incomeSources={(income.data ?? []) as IncomeSource[]}
       expenses={(expenses.data ?? []) as Expense[]}
     />
+    </>
   );
 }

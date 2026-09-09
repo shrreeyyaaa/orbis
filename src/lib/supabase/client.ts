@@ -11,7 +11,7 @@ export function createClient() {
 
   try {
     return createBrowserClient(url, key);
-  } catch {
-    return createMockSupabaseClient() as any;
+  } catch (error) {
+    throw new Error("Unable to initialize the connected data client", { cause: error });
   }
 }

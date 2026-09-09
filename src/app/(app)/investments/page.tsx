@@ -3,6 +3,7 @@ import { getHouseholdContext } from "@/lib/household";
 import { createClient } from "@/lib/supabase/server";
 import { InvestmentsView } from "./investments-view";
 import type { Account, Asset, Holding } from "@/lib/types";
+import { PageInsightsRail } from "@/components/page-insights-rail";
 
 export default async function InvestmentsPage() {
   const ctx = await getHouseholdContext();
@@ -16,12 +17,15 @@ export default async function InvestmentsPage() {
   ]);
 
   return (
-    <InvestmentsView
+    <>
+      <PageInsightsRail scope="investing" title="Investment insights" />
+      <InvestmentsView
       householdId={ctx.household.id}
       owners={ctx.owners}
       accounts={(accounts.data ?? []) as Account[]}
       holdings={(holdings.data ?? []) as Holding[]}
       assets={(assets.data ?? []) as Asset[]}
     />
+    </>
   );
 }

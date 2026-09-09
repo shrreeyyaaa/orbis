@@ -27,7 +27,7 @@ export function Celebration({
         color: COLORS[i % COLORS.length],
         rotate: Math.random() * 360,
       })),
-    [title],
+    [],
   );
 
   useEffect(() => {

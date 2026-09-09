@@ -68,3 +68,25 @@ export function StaggerItem({
     </motion.div>
   );
 }
+
+/** Soft opacity fade for page main content. */
+export function PageEnter({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+  if (reduce) return <div className={className}>{children}</div>;
+  return (
+    <motion.div
+      className={className}
+      initial={{ y: 4 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+}

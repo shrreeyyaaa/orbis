@@ -296,7 +296,7 @@ export function FanChart({
         <Area dataKey="s1" stackId="fan" stroke="none" fill="hsl(var(--gold))" fillOpacity={0.12} isAnimationActive={false} />
         <Area dataKey="s2" stackId="fan" stroke="none" fill="hsl(var(--gold))" fillOpacity={0.28} isAnimationActive={false} />
         <Area dataKey="s3" stackId="fan" stroke="none" fill="hsl(var(--gold))" fillOpacity={0.12} isAnimationActive={false} />
-        <Line dataKey="p50" stroke="#1A2C4E" strokeWidth={2} dot={false} isAnimationActive={false} />
+        <Line dataKey="p50" stroke="hsl(var(--orbit))" strokeWidth={2} dot={false} isAnimationActive={false} />
       </ComposedChart>
     </ResponsiveContainer>
   );

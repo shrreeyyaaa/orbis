@@ -575,6 +575,85 @@ export const MOCK_GOALS: Goal[] = [
   },
 ];
 
+export const MOCK_GOAL_INCOME_ALLOCATIONS = [
+  {
+    id: "gia-1",
+    household_id: "hh-001",
+    goal_id: "goal-1",
+    income_source_id: "inc-1",
+    mode: "pct" as const,
+    value_bps: 1000,
+    value_minor: 0,
+    is_active: true,
+  },
+  {
+    id: "gia-2",
+    household_id: "hh-001",
+    goal_id: "goal-2",
+    income_source_id: "inc-2",
+    mode: "fixed" as const,
+    value_bps: 0,
+    value_minor: 150000,
+    is_active: true,
+  },
+];
+
+export const MOCK_GOAL_CONTRIBUTIONS: {
+  id: string;
+  household_id: string;
+  goal_id: string;
+  income_source_id: string | null;
+  amount_minor: number;
+  currency: string;
+  applied_on: string;
+  note: string | null;
+}[] = [];
+
+function isoDaysAgo(n: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+export const MOCK_FINANCIAL_EVENTS = [
+  {
+    id: "fe-1",
+    household_id: "hh-001",
+    kind: "contribution" as const,
+    title: "Applied income to Emergency Reserve",
+    occurred_on: isoDaysAgo(0),
+    goal_id: "goal-1",
+    meta: null,
+  },
+  {
+    id: "fe-2",
+    household_id: "hh-001",
+    kind: "milestone" as const,
+    title: "Net worth valuation refreshed",
+    occurred_on: isoDaysAgo(1),
+    goal_id: null,
+    meta: null,
+  },
+  {
+    id: "fe-3",
+    household_id: "hh-001",
+    kind: "achievement" as const,
+    title: "Unlocked Goal Setter",
+    occurred_on: isoDaysAgo(2),
+    goal_id: null,
+    meta: null,
+  },
+  {
+    id: "fe-4",
+    household_id: "hh-001",
+    kind: "contribution" as const,
+    title: "Education fund contribution",
+    occurred_on: isoDaysAgo(3),
+    goal_id: "goal-2",
+    meta: null,
+  },
+];
+
 export const MOCK_EXCHANGE_RATES = [
   { id: "fx-1", household_id: "hh-001", base_currency: "USD", quote_currency: "EUR", rate: 0.92, as_of_date: "2026-08-01", source: "demo" },
   { id: "fx-2", household_id: "hh-001", base_currency: "USD", quote_currency: "GBP", rate: 0.79, as_of_date: "2026-08-01", source: "demo" },

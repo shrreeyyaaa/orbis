@@ -182,7 +182,6 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
             householdId={householdId}
             ownerId={defaultOwnerId}
             addedCount={accountCount}
-            demoLoaded={demoLoaded}
             onAdded={() => setAccountCount((c) => c + 1)}
             onDemo={async () => {
               setBusy(true);
@@ -340,7 +339,6 @@ function AccountsStep({
   householdId,
   ownerId,
   addedCount,
-  demoLoaded,
   onAdded,
   onDemo,
   busy,
@@ -350,7 +348,6 @@ function AccountsStep({
   householdId: string;
   ownerId: string | null;
   addedCount: number;
-  demoLoaded: boolean;
   onAdded: () => void;
   onDemo: () => void;
   busy: boolean;
