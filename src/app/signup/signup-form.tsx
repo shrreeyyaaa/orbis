@@ -137,7 +137,7 @@ export function SignupForm() {
             onChange={(e) => setTerms(e.target.checked)}
             className="mt-1 h-3.5 w-3.5 rounded border-input accent-primary"
           />
-          <span>I agree to the terms of use for this demo wealth dashboard.</span>
+          <span>I agree to the terms of use for this wealth dashboard.</span>
         </label>
         {error && <p className="text-sm text-destructive">{error}</p>}
         <Button type="submit" className="h-11 w-full rounded-xl font-semibold shadow-[0_12px_32px_-12px_hsl(var(--primary)/0.45)] active:translate-y-0.5" disabled={loading}>

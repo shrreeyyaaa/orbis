@@ -13,11 +13,11 @@ export interface SetupStep {
 
 export function GettingStarted({
   steps,
-  onLoadDemo,
+  onLoadSample,
   seeding,
 }: {
   steps: SetupStep[];
-  onLoadDemo?: () => void;
+  onLoadSample?: () => void;
   seeding?: boolean;
 }) {
   const done = steps.filter((s) => s.done).length;
@@ -34,8 +34,8 @@ export function GettingStarted({
             {done} of {steps.length} complete &middot; finish to unlock your full picture.
           </p>
         </div>
-        {onLoadDemo && (
-          <Button variant="gold" size="sm" onClick={onLoadDemo} disabled={seeding}>
+        {onLoadSample && (
+          <Button variant="gold" size="sm" onClick={onLoadSample} disabled={seeding}>
             <Sparkles className="h-4 w-4" />
             {seeding ? "Loading…" : "Load sample data"}
           </Button>

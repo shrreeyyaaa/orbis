@@ -1,5 +1,7 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useScope } from "@/components/scope-context";
 import { useCurrency } from "@/components/currency-context";
 import { filterPortfolio } from "@/lib/scope";
@@ -48,6 +50,9 @@ export function NetWorthView({
     [scoped, owners, reportingCurrency, rates],
   );
 
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [query, setQuery] = useState("");
+
   const digits = getMinorDigits(displayCurrency);
   const fmtAxis = (major: number) =>
     formatMoney(Math.round(major * 10 ** digits), displayCurrency, { compact: true });
@@ -73,6 +78,33 @@ export function NetWorthView({
   }, [valuations, scopedIds, reportingCurrency, rates, displayCurrency]);
 
   const sortedItems = [...nw.items].sort((a, b) => b.baseMinor - a.baseMinor);
+
+  const keyOf = (it: (typeof sortedItems)[number]) => (it.assetClass ? `ac:${it.assetClass}` : `kind:${it.kind}`);
+  const labelOf = (it: (typeof sortedItems)[number]) =>
+    it.assetClass ? ASSET_CLASS_LABELS[it.assetClass] : KIND_LABEL[it.kind];
+  const typeOptions = useMemo(() => {
+    const m = new Map<string, { key: string; label: string; count: number }>();
+    for (const it of sortedItems) {
+      const k = keyOf(it);
+      const cur = m.get(k);
+      if (cur) cur.count++;
+      else m.set(k, { key: k, label: labelOf(it), count: 1 });
+    }
+    return [
+      { key: "all", label: "All", count: sortedItems.length },
+      ...[...m.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label)),
+    ];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortedItems]);
+  const visibleItems = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return sortedItems.filter(
+      (it) =>
+        (typeFilter === "all" || keyOf(it) === typeFilter) &&
+        (!q || it.name.toLowerCase().includes(q) || labelOf(it).toLowerCase().includes(q)),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortedItems, typeFilter, query]);
 
   return (
     <div>
@@ -131,12 +163,39 @@ export function NetWorthView({
       </div>
 
       <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>All holdings</CardTitle>
+        <CardHeader className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle>All holdings</CardTitle>
+            <div className="relative w-full sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Search holdings"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {typeOptions.map((o) => (
+              <button
+                key={o.key}
+                type="button"
+                onClick={() => setTypeFilter(o.key)}
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                  typeFilter === o.key
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "bg-background text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {o.label} <span className="opacity-70">{o.count}</span>
+              </button>
+            ))}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="divide-y">
-            {sortedItems.map((it) => (
+            {visibleItems.map((it) => (
               <div key={`${it.kind}:${it.id}`} className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{it.name}</p>
@@ -154,8 +213,10 @@ export function NetWorthView({
                 </span>
               </div>
             ))}
-            {sortedItems.length === 0 && (
-              <p className="py-8 text-center text-sm text-muted-foreground">No holdings in scope.</p>
+            {visibleItems.length === 0 && (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                {sortedItems.length === 0 ? "No holdings in scope." : "No holdings match this filter."}
+              </p>
             )}
           </div>
         </CardContent>

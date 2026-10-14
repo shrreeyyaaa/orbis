@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildSnapshot } from "@/lib/snapshot";
-import { localAnswer, callLLM, hasLLM, configuredLLMProvider, DISCLAIMER, type ChatMessage } from "@/lib/assistant";
+import { localAnswer, callLLM, hasLLM, DISCLAIMER, type ChatMessage } from "@/lib/assistant";
 
 export async function POST(request: Request) {
   let body: { messages?: ChatMessage[]; allowCloud?: boolean };
@@ -33,10 +33,11 @@ export async function POST(request: Request) {
   let mode: "local" | "cloud" = "local";
   let provider: string | null = null;
   if (body.allowCloud === true && hasLLM()) {
-    answer = await callLLM(messages, snapshot);
-    if (answer) {
+    const llm = await callLLM(messages, snapshot);
+    if (llm) {
+      answer = llm.text;
       mode = "cloud";
-      provider = configuredLLMProvider();
+      provider = llm.provider;
     }
   }
   if (!answer) {

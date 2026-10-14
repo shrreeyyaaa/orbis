@@ -11,10 +11,10 @@ export async function createClient() {
 
   if (!url || !key || url.includes("your-project-ref.supabase.co")) {
     const cookieStore = await cookies();
-    const demoCookie = cookieStore.get("orbis_demo_logged_in")?.value;
+    const sessionCookie = cookieStore.get("orbis_logged_in")?.value;
     const client = createMockSupabaseClient();
 
-    if (demoCookie !== "true") {
+    if (sessionCookie !== "true") {
       client.auth.getUser = async () => ({ data: { user: null }, error: null });
     } else {
       client.auth.getUser = async () => ({ data: { user: MOCK_USER }, error: null });

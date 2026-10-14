@@ -6,16 +6,20 @@ export function PageHeader({
   title,
   description,
   action,
+  eyebrow,
 }: {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  eyebrow?: string | null;
 }) {
   return (
     <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div className="relative pl-4">
         <span aria-hidden className="absolute inset-y-0 left-0 w-0.5 rounded-full bg-gradient-to-b from-primary to-primary/10" />
-        <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-primary">Orbis workspace</p>
+        {eyebrow && (
+          <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.2em] text-primary">{eyebrow}</p>
+        )}
         <h1 className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
         {description && (
           <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>

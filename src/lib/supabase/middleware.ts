@@ -10,8 +10,8 @@ export async function updateSession(request: NextRequest) {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key || url.includes("your-project-ref.supabase.co")) {
-    const demoCookie = request.cookies.get("orbis_demo_logged_in")?.value;
-    const isLoggedIn = demoCookie === "true";
+    const sessionCookie = request.cookies.get("orbis_logged_in")?.value;
+    const isLoggedIn = sessionCookie === "true";
     const path = request.nextUrl.pathname;
     const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
 

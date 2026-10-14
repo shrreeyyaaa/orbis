@@ -96,56 +96,83 @@ function systemPrompt(s: FinancialSnapshot): string {
   ].join("\n");
 }
 
-/** Calls an LLM provider if a key is configured; returns null if none/failed. */
-export async function callLLM(messages: ChatMessage[], s: FinancialSnapshot): Promise<string | null> {
+export interface LLMResult {
+  text: string;
+  provider: "OpenAI" | "Anthropic";
+}
+
+async function callOpenAI(messages: ChatMessage[], sys: string, key: string, signal: AbortSignal): Promise<string | null> {
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+      temperature: 0.2,
+      messages: [{ role: "system", content: sys }, ...messages],
+    }),
+    signal,
+  });
+  if (!res.ok) return null;
+  const json = await res.json();
+  return json.choices?.[0]?.message?.content ?? null;
+}
+
+async function callAnthropic(messages: ChatMessage[], sys: string, key: string, signal: AbortSignal): Promise<string | null> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: process.env.ANTHROPIC_MODEL || "claude-haiku-5-5",
+      max_tokens: 700,
+      system: sys,
+      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+    }),
+    signal,
+  });
+  if (!res.ok) return null;
+  const json = await res.json();
+  return json.content?.[0]?.text ?? null;
+}
+
+/**
+ * Calls OpenAI first when its key is set, then falls back to Anthropic if
+ * OpenAI is missing, fails or returns nothing. Returns null if neither answers.
+ */
+export async function callLLM(messages: ChatMessage[], s: FinancialSnapshot): Promise<LLMResult | null> {
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const sys = systemPrompt(s);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15_000);
 
-  try {
-    if (openaiKey) {
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-        body: JSON.stringify({
-          model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-          temperature: 0.2,
-          messages: [{ role: "system", content: sys }, ...messages],
-        }),
-        signal: controller.signal,
-      });
-      if (!res.ok) return null;
-      const json = await res.json();
-      return json.choices?.[0]?.message?.content ?? null;
+  if (openaiKey) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
+    try {
+      const text = await callOpenAI(messages, sys, openaiKey, controller.signal);
+      if (text) return { text, provider: "OpenAI" };
+    } catch {
+      // fall through to Anthropic
+    } finally {
+      clearTimeout(timeout);
     }
-
-    if (anthropicKey) {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": anthropicKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify({
-          model: process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-latest",
-          max_tokens: 700,
-          system: sys,
-          messages: messages.map((m) => ({ role: m.role, content: m.content })),
-        }),
-        signal: controller.signal,
-      });
-      if (!res.ok) return null;
-      const json = await res.json();
-      return json.content?.[0]?.text ?? null;
-    }
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timeout);
   }
+
+  if (anthropicKey) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15_000);
+    try {
+      const text = await callAnthropic(messages, sys, anthropicKey, controller.signal);
+      if (text) return { text, provider: "Anthropic" };
+    } catch {
+      // no provider answered
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   return null;
 }
 
@@ -153,8 +180,3 @@ export function hasLLM(): boolean {
   return Boolean(process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY);
 }
 
-export function configuredLLMProvider(): "OpenAI" | "Anthropic" | null {
-  if (process.env.OPENAI_API_KEY) return "OpenAI";
-  if (process.env.ANTHROPIC_API_KEY) return "Anthropic";
-  return null;
-}

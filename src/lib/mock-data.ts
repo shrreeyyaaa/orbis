@@ -14,13 +14,13 @@ import type {
 
 export const MOCK_USER = {
   id: "00000000-0000-0000-0000-000000000001",
-  email: "demo@orbis.local",
+  email: "amorgan@orbis.local",
   created_at: new Date().toISOString(),
 };
 
 export const MOCK_HOUSEHOLD: Household = {
   id: "hh-001",
-  name: "Orbis Family Office",
+  name: "Morgans Family Office",
   reporting_currency: "USD",
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
@@ -38,7 +38,7 @@ export const MOCK_OWNERS: Owner[] = [
   {
     id: "owner-self",
     household_id: "hh-001",
-    name: "You (Alex)",
+    name: "Alex Morgan (You)",
     kind: "individual",
     member_user_id: MOCK_USER.id,
     relationship: "Self",
@@ -54,7 +54,7 @@ export const MOCK_OWNERS: Owner[] = [
   {
     id: "owner-spouse",
     household_id: "hh-001",
-    name: "Spouse (Taylor)",
+    name: "Taylor Morgan (Spouse)",
     kind: "individual",
     member_user_id: null,
     relationship: "Spouse",
@@ -70,7 +70,7 @@ export const MOCK_OWNERS: Owner[] = [
   {
     id: "owner-child1",
     household_id: "hh-001",
-    name: "Emma (Daughter)",
+    name: "Emma Morgan (Daughter)",
     kind: "individual",
     member_user_id: null,
     relationship: "Child",
@@ -655,12 +655,12 @@ export const MOCK_FINANCIAL_EVENTS = [
 ];
 
 export const MOCK_EXCHANGE_RATES = [
-  { id: "fx-1", household_id: "hh-001", base_currency: "USD", quote_currency: "EUR", rate: 0.92, as_of_date: "2026-08-01", source: "demo" },
-  { id: "fx-2", household_id: "hh-001", base_currency: "USD", quote_currency: "GBP", rate: 0.79, as_of_date: "2026-08-01", source: "demo" },
-  { id: "fx-3", household_id: "hh-001", base_currency: "USD", quote_currency: "INR", rate: 83.2, as_of_date: "2026-08-01", source: "demo" },
-  { id: "fx-4", household_id: "hh-001", base_currency: "USD", quote_currency: "JPY", rate: 156.0, as_of_date: "2026-08-01", source: "demo" },
-  { id: "fx-5", household_id: "hh-001", base_currency: "USD", quote_currency: "CHF", rate: 0.9, as_of_date: "2026-08-01", source: "demo" },
-  { id: "fx-6", household_id: "hh-001", base_currency: "USD", quote_currency: "SGD", rate: 1.35, as_of_date: "2026-08-01", source: "demo" },
+  { id: "fx-1", household_id: "hh-001", base_currency: "USD", quote_currency: "EUR", rate: 0.92, as_of_date: "2026-08-01", source: "sample" },
+  { id: "fx-2", household_id: "hh-001", base_currency: "USD", quote_currency: "GBP", rate: 0.79, as_of_date: "2026-08-01", source: "sample" },
+  { id: "fx-3", household_id: "hh-001", base_currency: "USD", quote_currency: "INR", rate: 83.2, as_of_date: "2026-08-01", source: "sample" },
+  { id: "fx-4", household_id: "hh-001", base_currency: "USD", quote_currency: "JPY", rate: 156.0, as_of_date: "2026-08-01", source: "sample" },
+  { id: "fx-5", household_id: "hh-001", base_currency: "USD", quote_currency: "CHF", rate: 0.9, as_of_date: "2026-08-01", source: "sample" },
+  { id: "fx-6", household_id: "hh-001", base_currency: "USD", quote_currency: "SGD", rate: 1.35, as_of_date: "2026-08-01", source: "sample" },
 ];
 
 export function generateMockValuations(): Valuation[] {

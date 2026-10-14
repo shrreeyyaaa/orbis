@@ -31,7 +31,7 @@ import type {
   IncomeSource,
   Owner,
 } from "@/lib/types";
-import { Target, Plus, Pencil, Trash2, CircleDollarSign } from "lucide-react";
+import { Target, Plus, Pencil, Trash2 } from "lucide-react";
 
 export function GoalsView({
   householdId,
@@ -53,8 +53,7 @@ export function GoalsView({
   const incomeById = useMemo(() => new Map(incomeSources.map((s) => [s.id, s])), [incomeSources]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Goal | null>(null);
-  const [allocGoal, setAllocGoal] = useState<Goal | null>(null);
-  const [applyingId, setApplyingId] = useState<string | null>(null);
+  const [fundsGoal, setFundsGoal] = useState<Goal | null>(null);
   useNewParam(() => {
     setEditing(null);
     setOpen(true);
@@ -79,57 +78,6 @@ export function GoalsView({
       const m = monthlyAllocationMinor(a, src);
       return sum + toBase(m, src.currency, reportingCurrency, rates);
     }, 0);
-  }
-
-  async function applyPeriod(g: Goal) {
-    setApplyingId(g.id);
-    const allocs = goalAllocations(g.id);
-    if (allocs.length === 0) {
-      toast({ title: "No income allocated", description: "Link an income source first.", variant: "destructive" });
-      setApplyingId(null);
-      return;
-    }
-    const supabase = createClient();
-    let added = 0;
-    for (const a of allocs) {
-      const src = incomeById.get(a.income_source_id);
-      if (!src) continue;
-      const amount = monthlyAllocationMinor(a, src);
-      if (amount <= 0) continue;
-      await supabase.from("goal_contributions").insert({
-        household_id: householdId,
-        goal_id: g.id,
-        income_source_id: src.id,
-        amount_minor: amount,
-        currency: src.currency,
-        applied_on: new Date().toISOString().slice(0, 10),
-        note: `Applied from ${src.name}`,
-      });
-      const inGoalCurrency = toBase(amount, src.currency, g.currency, rates);
-      added += inGoalCurrency;
-    }
-    const newSaved = g.manual_saved_minor + added;
-    await supabase.from("goals").update({ manual_saved_minor: newSaved }).eq("id", g.id);
-    await supabase.from("financial_events").insert({
-      household_id: householdId,
-      kind: "contribution",
-      title: `Applied income to ${g.name}`,
-      occurred_on: new Date().toISOString().slice(0, 10),
-      goal_id: g.id,
-      meta: { amount_minor: added },
-    });
-    if (g.target_minor > 0 && newSaved >= g.target_minor) {
-      await supabase.from("financial_events").insert({
-        household_id: householdId,
-        kind: "goal_completed",
-        title: `${g.name} fully funded`,
-        occurred_on: new Date().toISOString().slice(0, 10),
-        goal_id: g.id,
-      });
-    }
-    toast({ title: "Contribution applied", description: `Added ${show(toBase(added, g.currency, reportingCurrency, rates))} to ${g.name}`, variant: "success" });
-    setApplyingId(null);
-    router.refresh();
   }
 
   return (
@@ -208,17 +156,9 @@ export function GoalsView({
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center justify-end gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={applyingId === g.id || fundedBy.length === 0}
-                      onClick={() => applyPeriod(g)}
-                    >
-                      <CircleDollarSign className="h-3.5 w-3.5" />
-                      {applyingId === g.id ? "Applying…" : "Apply this period"}
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setAllocGoal(g)}>
-                      Allocate income
+                    <Button variant="outline" size="sm" onClick={() => setFundsGoal(g)}>
+                      <Plus className="h-3.5 w-3.5" />
+                      Add funds
                     </Button>
                     <Button aria-label={`Edit ${g.name}`} title={`Edit ${g.name}`} variant="ghost" size="icon" onClick={() => { setEditing(g); setOpen(true); }}>
                       <Pencil className="h-4 w-4" />
@@ -252,6 +192,8 @@ export function GoalsView({
         householdId={householdId}
         owners={owners}
         goal={editing}
+        incomeSources={incomeSources}
+        allocations={allocations}
         onSaved={() => {
           setOpen(false);
           toast({ title: editing ? "Goal updated" : "Goal added", variant: "success" });
@@ -259,21 +201,117 @@ export function GoalsView({
         }}
       />
 
-      <AllocateDialog
-        key={allocGoal?.id ?? "alloc"}
-        open={!!allocGoal}
-        onOpenChange={(o) => !o && setAllocGoal(null)}
+      <AddFundsDialog
+        key={fundsGoal?.id ?? "funds"}
+        open={!!fundsGoal}
+        onOpenChange={(o) => !o && setFundsGoal(null)}
         householdId={householdId}
-        goal={allocGoal}
-        incomeSources={incomeSources}
-        allocations={allocations}
-        onSaved={() => {
-          setAllocGoal(null);
-          toast({ title: "Allocation saved", variant: "success" });
+        goal={fundsGoal}
+        onSaved={(added) => {
+          const g = fundsGoal;
+          setFundsGoal(null);
+          toast({
+            title: "Funds added",
+            description: g ? `Added ${show(toBase(added, g.currency, reportingCurrency, rates))} to ${g.name}` : undefined,
+            variant: "success",
+          });
           router.refresh();
         }}
       />
     </div>
+  );
+}
+
+function AddFundsDialog({
+  open,
+  onOpenChange,
+  householdId,
+  goal,
+  onSaved,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  householdId: string;
+  goal: Goal | null;
+  onSaved: (addedMinor: number) => void;
+}) {
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  if (!goal) return null;
+  const g = goal;
+  const amountMinor = Number(toMinor(amount || "0", g.currency));
+  const valid = Number.isFinite(amountMinor) && amountMinor > 0;
+
+  async function save() {
+    if (!valid) return;
+    setSaving(true);
+    const supabase = createClient();
+    const today = new Date().toISOString().slice(0, 10);
+    const newSaved = g.manual_saved_minor + amountMinor;
+    await supabase.from("goal_contributions").insert({
+      household_id: householdId,
+      goal_id: g.id,
+      income_source_id: null,
+      amount_minor: amountMinor,
+      currency: g.currency,
+      applied_on: today,
+      note: note || "Funds added",
+    });
+    await supabase.from("goals").update({ manual_saved_minor: newSaved }).eq("id", g.id);
+    await supabase.from("financial_events").insert({
+      household_id: householdId,
+      kind: "contribution",
+      title: `Added funds to ${g.name}`,
+      occurred_on: today,
+      goal_id: g.id,
+      meta: { amount_minor: amountMinor },
+    });
+    if (g.target_minor > 0 && newSaved >= g.target_minor && g.manual_saved_minor < g.target_minor) {
+      await supabase.from("financial_events").insert({
+        household_id: householdId,
+        kind: "goal_completed",
+        title: `${g.name} fully funded`,
+        occurred_on: today,
+        goal_id: g.id,
+      });
+    }
+    setSaving(false);
+    onSaved(amountMinor);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add funds → {g.name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <Field label={`Amount (${g.currency})`}>
+            <Input
+              inputMode="decimal"
+              autoFocus
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="e.g. 5000"
+            />
+          </Field>
+          <Field label="Note (optional)">
+            <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Bonus, monthly top-up" />
+          </Field>
+          <p className="text-xs text-muted-foreground">
+            Saved so far {fromMinor(g.manual_saved_minor, g.currency)} of {fromMinor(g.target_minor, g.currency)} {g.currency}
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={save} disabled={saving || !valid}>
+            <Plus className="h-4 w-4" /> {saving ? "Adding…" : "Add funds"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -283,6 +321,8 @@ function GoalDialog({
   householdId,
   owners,
   goal,
+  incomeSources,
+  allocations,
   onSaved,
 }: {
   open: boolean;
@@ -290,6 +330,8 @@ function GoalDialog({
   householdId: string;
   owners: Owner[];
   goal: Goal | null;
+  incomeSources: IncomeSource[];
+  allocations: GoalIncomeAllocation[];
   onSaved: () => void;
 }) {
   const [name, setName] = useState(goal?.name ?? "");
@@ -299,12 +341,20 @@ function GoalDialog({
   const [target, setTarget] = useState(goal ? fromMinor(goal.target_minor, goal.currency) : "");
   const [saved, setSaved] = useState(goal ? fromMinor(goal.manual_saved_minor, goal.currency) : "");
   const [targetDate, setTargetDate] = useState(goal?.target_date ?? "");
+  const existingAlloc = goal
+    ? allocations.find((a) => a.goal_id === goal.id && a.is_active)
+    : undefined;
+  const [incomeId, setIncomeId] = useState(existingAlloc?.income_source_id ?? "");
+  const [allocMode, setAllocMode] = useState<"pct" | "fixed">(existingAlloc?.mode ?? "pct");
+  const [pct, setPct] = useState(existingAlloc ? String(existingAlloc.value_bps / 100) : "10");
+  const [fixed, setFixed] = useState(existingAlloc ? fromMinor(existingAlloc.value_minor, "USD") : "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function save() {
     setSaving(true);
     setError(null);
+    const goalId = goal?.id ?? crypto.randomUUID();
     const payload = {
       household_id: householdId,
       owner_id: ownerId === "none" ? null : ownerId,
@@ -318,15 +368,34 @@ function GoalDialog({
     const supabase = createClient();
     const { error } = goal
       ? await supabase.from("goals").update(payload).eq("id", goal.id)
-      : await supabase.from("goals").insert(payload);
+      : await supabase.from("goals").insert({ id: goalId, ...payload });
+    if (error) { setSaving(false); setError(error.message); return; }
+
+    if (incomeId) {
+      const allocPayload = {
+        household_id: householdId,
+        goal_id: goalId,
+        income_source_id: incomeId,
+        mode: allocMode,
+        value_bps: allocMode === "pct" ? Math.round(Number(pct || "0") * 100) : 0,
+        value_minor: allocMode === "fixed" ? Number(toMinor(fixed || "0", "USD")) : 0,
+        is_active: true,
+      };
+      if (existingAlloc) {
+        await supabase.from("goal_income_allocations").update(allocPayload).eq("id", existingAlloc.id);
+      } else {
+        await supabase.from("goal_income_allocations").insert(allocPayload);
+      }
+    } else if (existingAlloc) {
+      await supabase.from("goal_income_allocations").update({ is_active: false }).eq("id", existingAlloc.id);
+    }
     setSaving(false);
-    if (error) { setError(error.message); return; }
     onSaved();
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{goal ? "Edit goal" : "Add goal"}</DialogTitle>
         </DialogHeader>
@@ -351,107 +420,50 @@ function GoalDialog({
               <Input type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} />
             </Field>
           </div>
+
+          <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
+            <p className="text-sm font-medium">Income allocation</p>
+            <Field label="Fund from income source">
+              <select
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                value={incomeId}
+                onChange={(e) => setIncomeId(e.target.value)}
+              >
+                <option value="">No allocation</option>
+                {incomeSources.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </Field>
+            {incomeId && (
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Mode">
+                  <select
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                    value={allocMode}
+                    onChange={(e) => setAllocMode(e.target.value as "pct" | "fixed")}
+                  >
+                    <option value="pct">Percent of income</option>
+                    <option value="fixed">Fixed monthly amount</option>
+                  </select>
+                </Field>
+                {allocMode === "pct" ? (
+                  <Field label="Percent">
+                    <Input inputMode="decimal" value={pct} onChange={(e) => setPct(e.target.value)} />
+                  </Field>
+                ) : (
+                  <Field label="Monthly amount">
+                    <Input inputMode="decimal" value={fixed} onChange={(e) => setFixed(e.target.value)} />
+                  </Field>
+                )}
+              </div>
+            )}
+          </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={save} disabled={saving || !name}>{saving ? "Saving…" : "Save"}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function AllocateDialog({
-  open,
-  onOpenChange,
-  householdId,
-  goal,
-  incomeSources,
-  allocations,
-  onSaved,
-}: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-  householdId: string;
-  goal: Goal | null;
-  incomeSources: IncomeSource[];
-  allocations: GoalIncomeAllocation[];
-  onSaved: () => void;
-}) {
-  const existing = goal
-    ? allocations.find((a) => a.goal_id === goal.id && a.is_active)
-    : undefined;
-  const [incomeId, setIncomeId] = useState(existing?.income_source_id ?? incomeSources[0]?.id ?? "");
-  const [mode, setMode] = useState<"pct" | "fixed">(existing?.mode ?? "pct");
-  const [pct, setPct] = useState(existing ? String(existing.value_bps / 100) : "10");
-  const [fixed, setFixed] = useState(existing ? fromMinor(existing.value_minor, "USD") : "");
-  const [saving, setSaving] = useState(false);
-
-  if (!goal) return null;
-
-  async function save() {
-    setSaving(true);
-    const payload = {
-      household_id: householdId,
-      goal_id: goal!.id,
-      income_source_id: incomeId,
-      mode,
-      value_bps: mode === "pct" ? Math.round(Number(pct || "0") * 100) : 0,
-      value_minor: mode === "fixed" ? Number(toMinor(fixed || "0", "USD")) : 0,
-      is_active: true,
-    };
-    const supabase = createClient();
-    if (existing) {
-      await supabase.from("goal_income_allocations").update(payload).eq("id", existing.id);
-    } else {
-      await supabase.from("goal_income_allocations").insert(payload);
-    }
-    setSaving(false);
-    onSaved();
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Allocate income → {goal.name}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <Field label="Income source">
-            <select
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              value={incomeId}
-              onChange={(e) => setIncomeId(e.target.value)}
-            >
-              {incomeSources.map((s) => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Mode">
-            <select
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-              value={mode}
-              onChange={(e) => setMode(e.target.value as "pct" | "fixed")}
-            >
-              <option value="pct">Percent of income</option>
-              <option value="fixed">Fixed monthly amount</option>
-            </select>
-          </Field>
-          {mode === "pct" ? (
-            <Field label="Percent">
-              <Input inputMode="decimal" value={pct} onChange={(e) => setPct(e.target.value)} />
-            </Field>
-          ) : (
-            <Field label="Monthly amount">
-              <Input inputMode="decimal" value={fixed} onChange={(e) => setFixed(e.target.value)} />
-            </Field>
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={save} disabled={saving || !incomeId}>{saving ? "Saving…" : "Save allocation"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

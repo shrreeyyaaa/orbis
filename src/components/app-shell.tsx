@@ -16,7 +16,6 @@ import {
   Menu,
   Search,
   Settings,
-  ShieldCheck,
   Sparkles,
   Target,
   Trophy,
@@ -79,7 +78,7 @@ const sections: NavSection[] = [
     matches: ["/cashflow"],
     children: [
       { href: "/cashflow?view=income", label: "Income", icon: CircleDollarSign },
-      { href: "/cashflow?view=expenses", label: "Spending", icon: CircleDollarSign },
+      { href: "/cashflow?view=expenses", label: "Expenses", icon: CircleDollarSign },
     ],
   },
   {
@@ -106,7 +105,7 @@ const sections: NavSection[] = [
     matches: ["/insights", "/achievements"],
     children: [
       { href: "/insights", label: "Action desk", icon: Lightbulb },
-      { href: "/achievements", label: "Stewardship", icon: Trophy },
+      { href: "/achievements", label: "Milestone", icon: Trophy },
     ],
   },
 ];
@@ -123,7 +122,6 @@ export function AppShell({
   exchangeRates,
   displayCurrency,
   userEmail,
-  demoMode = false,
   children,
 }: {
   household: Household;
@@ -131,7 +129,6 @@ export function AppShell({
   exchangeRates: ExchangeRate[];
   displayCurrency: string | null;
   userEmail: string;
-  demoMode?: boolean;
   children: React.ReactNode;
   earnedCount?: number;
   streakDays?: number;
@@ -155,7 +152,7 @@ export function AppShell({
   }
 
   async function onLogout() {
-    document.cookie = "orbis_demo_logged_in=false; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "orbis_logged_in=false; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");
@@ -237,16 +234,6 @@ export function AppShell({
             </nav>
 
             <div className="relative border-t border-border/70 p-3">
-              <div className="mb-3 rounded-xl border border-border/70 bg-background/50 p-3">
-                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  <ShieldCheck className="h-3.5 w-3.5 text-primary" aria-hidden />
-                  Data status
-                </div>
-                <p className="mt-2 text-xs font-medium">{demoMode ? "Local demo workspace" : "Connected workspace"}</p>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  {demoMode ? "Sample data · changes are not durable" : "Household data · private view"}
-                </p>
-              </div>
               <div className="flex items-center gap-2 px-1">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-medium">{household.name}</p>
@@ -272,11 +259,11 @@ export function AppShell({
                 <button
                   type="button"
                   onClick={() => window.dispatchEvent(new Event(OPEN_COMMAND_EVENT))}
-                  className="hidden min-w-52 items-center gap-2 rounded-xl border border-border bg-card/80 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
+                  className="hidden w-1/2 min-w-[16rem] items-center gap-3 rounded-xl border border-border bg-card/80 px-4 py-2.5 text-base text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
                 >
-                  <Search className="h-4 w-4" aria-hidden />
+                  <Search className="h-5 w-5" aria-hidden />
                   Search anything
-                  <kbd className="ml-auto rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium">⌘K</kbd>
+                  <kbd className="ml-auto rounded border bg-muted px-2 py-1 text-xs font-medium">⌘K</kbd>
                 </button>
 
                 <div className="ml-auto flex items-center gap-1.5">
@@ -313,7 +300,6 @@ export function AppShell({
                 <ScopePicker className="min-w-0 w-full sm:w-[170px] sm:shrink-0" />
                 <CurrencyToggle className="min-w-0 w-full sm:w-[88px] sm:shrink-0" />
                 <span className="hidden shrink-0 rounded-lg border border-border bg-card/70 px-2.5 py-1.5 text-[11px] text-muted-foreground md:inline">Latest records</span>
-                {demoMode && <span className="hidden shrink-0 rounded-full border border-gold/30 bg-gold/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-gold md:inline">Demo</span>}
                 <button
                   type="button"
                   onClick={togglePrivacy}

@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useScope } from "@/components/scope-context";
 import { useCurrency } from "@/components/currency-context";
 import { filterPortfolio } from "@/lib/scope";
@@ -29,12 +29,13 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { MultiTrendChart, FanChart } from "@/components/charts";
+import { GrowthSimulation, type SimLine } from "@/components/growth-simulation";
 import { blendAssumptions } from "@/lib/assumptions";
 import { runMonteCarlo } from "@/lib/montecarlo";
 import type { NetWorthResult } from "@/lib/networth";
 import type { Owner } from "@/lib/types";
 import type { Portfolio } from "@/lib/load";
-import { Plus, Trash2, RotateCcw } from "lucide-react";
+import { Plus, Trash2, RotateCcw, Play } from "lucide-react";
 
 const DEFAULT_GROWTH: Record<string, number> = {
   "Cash & Equivalents": 2,
@@ -96,11 +97,52 @@ export function SimulateView({
 
   // ---- projection state ----
   const [growth, setGrowth] = useState<Record<string, number>>(DEFAULT_GROWTH);
+  const [stepUp, setStepUp] = useState<Record<string, number>>({});
   const [years, setYears] = useState(10);
   const [inflation, setInflation] = useState(2.5);
   const [contribution, setContribution] = useState("");
   const [contribReturn, setContribReturn] = useState(6);
   const [hypos, setHypos] = useState<Hypo[]>([]);
+  // Two independent simulations: one for Global assumptions, one for Growth by asset class.
+  const [globalRun, setGlobalRun] = useState(0);
+  const [classRun, setClassRun] = useState(0);
+  const globalRef = useRef<HTMLDivElement>(null);
+  const classRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (globalRun > 0) globalRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [globalRun]);
+  useEffect(() => {
+    if (classRun > 0) classRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [classRun]);
+
+  // Global simulation: whole portfolio as one line, driven only by the global assumptions.
+  const globalLines = useMemo<SimLine[]>(() => {
+    let total = 0;
+    for (const g of activeGroups) total += groupTotals.get(g) ?? 0;
+    for (const h of hypos) total += Number(toMinor(h.valueMajor || "0", reportingCurrency));
+    return [{ name: "Total portfolio", color: "#1A2C4E", valueMinor: total, growthPct: contribReturn }];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGroups, groupTotals, hypos, contribReturn, reportingCurrency]);
+
+  // Asset-class simulation: per-class growth + step-up only (no global inputs).
+  const simLines = useMemo<SimLine[]>(() => {
+    const out: SimLine[] = activeGroups.map((g) => ({
+      name: g,
+      color: GROUP_COLORS[g] ?? "#94a3b8",
+      valueMinor: groupTotals.get(g) ?? 0,
+      growthPct: growth[g] ?? 0,
+      stepUpPct: stepUp[g] ?? 0,
+    }));
+    for (const h of hypos) {
+      const v = Number(toMinor(h.valueMajor || "0", reportingCurrency));
+      if (v === 0) continue;
+      out.push({ name: h.label || "Hypothetical asset", color: "#D9B96A", valueMinor: v, growthPct: Number(h.growth || "0") });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeGroups, groupTotals, growth, stepUp, hypos, reportingCurrency]);
+  const monthlyMinorSim = Number(toMinor(contribution || "0", reportingCurrency));
 
   const digits = getMinorDigits(displayCurrency);
   const fmtAxis = (major: number) =>
@@ -110,10 +152,11 @@ export function SimulateView({
     const lines = activeGroups.map((g) => ({
       valueMinor: groupTotals.get(g) ?? 0,
       growthPct: growth[g] ?? 0,
+      stepUpPct: stepUp[g] ?? 0,
     }));
     for (const h of hypos) {
       const v = Number(toMinor(h.valueMajor || "0", reportingCurrency));
-      lines.push({ valueMinor: v, growthPct: Number(h.growth || "0") });
+      lines.push({ valueMinor: v, growthPct: Number(h.growth || "0"), stepUpPct: 0 });
     }
     const monthly = Number(toMinor(contribution || "0", reportingCurrency));
     const pts = projectNetWorth({
@@ -129,7 +172,7 @@ export function SimulateView({
       "Real (today's value)": toDisplay(p.realMinor) / 10 ** digits,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeGroups, groupTotals, growth, hypos, years, inflation, contribution, contribReturn, reportingCurrency, displayCurrency, rates]);
+  }, [activeGroups, groupTotals, growth, stepUp, hypos, years, inflation, contribution, contribReturn, reportingCurrency, displayCurrency, rates]);
 
   const startNominal = projection[0]?.Nominal ?? 0;
   const endNominal = projection[projection.length - 1]?.Nominal ?? 0;
@@ -188,6 +231,7 @@ export function SimulateView({
               </CardHeader>
               <CardContent className="space-y-4">
                 <Field label={`Horizon: ${years} years`}>
+                  <div className="flex items-center gap-3">
                   <input
                     type="range"
                     min={1}
@@ -196,16 +240,39 @@ export function SimulateView({
                     onChange={(e) => setYears(Number(e.target.value))}
                     className="w-full accent-primary"
                   />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8 shrink-0"
+                    aria-label="Add one year to horizon"
+                    onClick={() => setYears((y) => Math.min(40, y + 1))}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  </div>
                 </Field>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Inflation %">
-                    <Input
-                      inputMode="decimal"
-                      value={inflation}
-                      onChange={(e) => setInflation(Number(e.target.value) || 0)}
-                    />
+                  <Field label="Inflation % per year">
+                    <div className="flex gap-2">
+                      <Input
+                        inputMode="decimal"
+                        value={inflation}
+                        onChange={(e) => setInflation(Number(e.target.value) || 0)}
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        className="shrink-0"
+                        aria-label="Add 0.5 to inflation"
+                        onClick={() => setInflation((v) => Math.round((v + 0.5) * 100) / 100)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </Field>
-                  <Field label="Contribution return %">
+                  <Field label="Contribution return % per year">
                     <Input
                       inputMode="decimal"
                       value={contribReturn}
@@ -213,7 +280,7 @@ export function SimulateView({
                     />
                   </Field>
                 </div>
-                <Field label={`Monthly contribution (${reportingCurrency})`} hint="Recurring savings added and compounded at the return above.">
+                <Field label={`Monthly contribution (${reportingCurrency})`} hint={`Recurring savings added each month and compounded at the return above, at the rate of return of ${contribReturn}% per year${monthlyMinorSim > 0 ? ` · ${show(monthlyMinorSim * 12)} added per year` : ""}.`}>
                   <Input
                     inputMode="decimal"
                     placeholder="0"
@@ -221,21 +288,34 @@ export function SimulateView({
                     onChange={(e) => setContribution(e.target.value)}
                   />
                 </Field>
+                <Button className="w-full" onClick={() => setGlobalRun((n) => n + 1)}>
+                  <Play className="mr-2 h-4 w-4" /> Run 10-year simulation
+                </Button>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
                 <CardTitle>Growth by asset class</CardTitle>
-                <CardDescription>Annual % applied to each bucket.</CardDescription>
+                <CardDescription>
+                  Yearly % applied to each bucket. Step-up raises that bucket&apos;s growth rate by this many points every year.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
+                <div className="flex items-center gap-3 text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <span className="w-3" />
+                  <span className="flex-1">Asset class</span>
+                  <span className="w-20 text-center">Growth %/yr</span>
+                  <span className="w-20 text-center">Step-up %/yr</span>
+                </div>
                 {activeGroups.map((g) => (
                   <div key={g} className="flex items-center gap-3">
                     <span className="h-3 w-3 rounded-full" style={{ background: GROUP_COLORS[g] ?? "#94a3b8" }} />
-                    <span className="flex-1 text-sm">{g}</span>
-                    <span className="text-xs tabular-nums text-muted-foreground">
-                      {show(groupTotals.get(g) ?? 0)}
+                    <span className="flex-1 text-sm">
+                      {g}
+                      <span className="ml-2 text-xs tabular-nums text-muted-foreground">
+                        {show(groupTotals.get(g) ?? 0)}
+                      </span>
                     </span>
                     <Input
                       className="w-20"
@@ -245,11 +325,60 @@ export function SimulateView({
                         setGrowth((prev) => ({ ...prev, [g]: Number(e.target.value) || 0 }))
                       }
                     />
+                    <Input
+                      className="w-20"
+                      inputMode="decimal"
+                      value={stepUp[g] ?? 0}
+                      onChange={(e) =>
+                        setStepUp((prev) => ({ ...prev, [g]: Number(e.target.value) || 0 }))
+                      }
+                    />
                   </div>
                 ))}
+                <div className="mt-3 flex gap-2">
+                  <Button className="flex-1" onClick={() => setClassRun((n) => n + 1)}>
+                    <Play className="mr-2 h-4 w-4" /> Run 10-year simulation
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setGrowth(DEFAULT_GROWTH);
+                      setStepUp({});
+                      setClassRun(0);
+                    }}
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" /> Reset
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
+
+          {globalRun > 0 && (
+            <div ref={globalRef} className="scroll-mt-24">
+              <p className="mb-2 text-sm font-medium text-muted-foreground">Global assumptions simulation</p>
+              <GrowthSimulation
+                key={`g${globalRun}`}
+                lines={globalLines}
+                monthlyMinor={monthlyMinorSim}
+                contributionReturnPct={contribReturn}
+                inflationPct={inflation}
+              />
+            </div>
+          )}
+
+          {classRun > 0 && (
+            <div ref={classRef} className="scroll-mt-24">
+              <p className="mb-2 text-sm font-medium text-muted-foreground">Growth by asset class simulation</p>
+              <GrowthSimulation
+                key={`c${classRun}`}
+                lines={simLines}
+                monthlyMinor={0}
+                contributionReturnPct={0}
+                inflationPct={0}
+              />
+            </div>
+          )}
 
           <Card>
             <CardHeader className="flex-row items-center justify-between space-y-0">
@@ -313,7 +442,7 @@ export function SimulateView({
                       }
                     />
                   </Field>
-                  <Field label="Growth %">
+                  <Field label="Growth % per year">
                     <Input
                       className="w-20"
                       inputMode="decimal"
@@ -454,14 +583,14 @@ function MonteCarloTab({
               Prefilled from your current mix ({blended.expectedReturnPct}% return, {blended.volatilityPct}% volatility).
             </CardDescription>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Expected return %">
+              <Field label="Expected return % per year">
                 <Input inputMode="decimal" value={expReturn} onChange={(e) => setExpReturn(Number(e.target.value) || 0)} />
               </Field>
-              <Field label="Volatility %">
+              <Field label="Volatility % per year">
                 <Input inputMode="decimal" value={vol} onChange={(e) => setVol(Number(e.target.value) || 0)} />
               </Field>
             </div>
-            <Field label="Inflation %">
+            <Field label="Inflation % per year">
               <Input inputMode="decimal" value={inflation} onChange={(e) => setInflation(Number(e.target.value) || 0)} />
             </Field>
           </CardContent>

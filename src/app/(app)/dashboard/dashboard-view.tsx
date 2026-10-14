@@ -262,7 +262,7 @@ export function DashboardView({
     { label: "Set a goal", done: goals.length > 0, href: "/goals" },
   ];
 
-  async function loadDemo() {
+  async function loadSample() {
     setSeeding(true);
     await createClient().rpc("seed_demo_household", { p_household_id: household.id });
     router.refresh();
@@ -287,7 +287,7 @@ export function DashboardView({
         </div>
       </header>
 
-      <GettingStarted steps={setupSteps} onLoadDemo={isEmpty ? loadDemo : undefined} seeding={seeding} />
+      <GettingStarted steps={setupSteps} onLoadSample={isEmpty ? loadSample : undefined} seeding={seeding} />
 
       {nw.missingRates && (
         <div role="status" className="mt-4 flex items-start gap-3 rounded-xl border border-amber-400/35 bg-amber-400/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">

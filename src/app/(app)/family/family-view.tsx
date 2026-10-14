@@ -23,6 +23,23 @@ import type { Owner, OwnerKind } from "@/lib/types";
 import { Users, Plus, Pencil, Building2, User, Landmark } from "lucide-react";
 
 const LEGAL_KINDS: OwnerKind[] = ["trust", "llc", "corporation", "foundation", "estate"];
+const PERSON_KINDS: OwnerKind[] = ["individual", "joint"];
+
+type AddMode = "person" | "entity";
+
+function pick(kinds: OwnerKind[]): Record<string, string> {
+  return Object.fromEntries(kinds.map((k) => [k, OWNER_KIND_LABELS[k]]));
+}
+
+const SUBTYPE_SUGGESTIONS: Partial<Record<OwnerKind, string[]>> = {
+  trust: ["Revocable", "Irrevocable", "Living trust", "Charitable trust", "Special needs trust", "Dynasty trust"],
+  llc: ["Family holding LLC", "Real estate LLC", "Investment LLC", "Single-member", "Multi-member"],
+  corporation: ["S-Corp", "C-Corp", "Family corporation", "Professional corporation"],
+  foundation: ["Private foundation", "Donor-advised fund", "Public charity"],
+  estate: ["Probate estate", "Testamentary estate"],
+};
+
+const ROLE_SUGGESTIONS = ["Trustee", "Co-trustee", "Trust protector", "Managing member", "Manager", "Director", "Executor"];
 
 function kindIcon(kind: OwnerKind) {
   if (kind === "individual" || kind === "joint") return User;
@@ -42,8 +59,10 @@ export function FamilyView({
   const focusedOwnerId = searchParams.get("focus");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Owner | null>(null);
+  const [mode, setMode] = useState<AddMode>("person");
   useNewParam(() => {
     setEditing(null);
+    setMode("person");
     setOpen(true);
   });
 
@@ -58,8 +77,9 @@ export function FamilyView({
     return () => cancelAnimationFrame(frame);
   }, [focusedOwnerId]);
 
-  function openNew() {
+  function openNew(m: AddMode = "person") {
     setEditing(null);
+    setMode(m);
     setOpen(true);
   }
   function openEdit(o: Owner) {
@@ -76,8 +96,8 @@ export function FamilyView({
         title="Family & Entities"
         description="People, trusts, LLCs, and other legal entities that own your wealth."
         action={
-          <Button onClick={openNew}>
-            <Plus className="h-4 w-4" /> Add owner
+          <Button onClick={() => openNew("person")}>
+            <Plus className="h-4 w-4" /> Add family member
           </Button>
         }
       />
@@ -88,7 +108,7 @@ export function FamilyView({
           title="No owners yet"
           description="Add family members and legal entities like trusts and LLCs to assign ownership of accounts and assets."
           action={
-            <Button onClick={openNew}>
+            <Button onClick={() => openNew("person")}>
               <Plus className="h-4 w-4" /> Add your first owner
             </Button>
           }
@@ -96,19 +116,33 @@ export function FamilyView({
       ) : (
         <div className="space-y-6">
           <Section title="Family members" items={people} onEdit={openEdit} focusedOwnerId={focusedOwnerId} />
-          <Section title="Trusts, LLCs & legal entities" items={entities} onEdit={openEdit} focusedOwnerId={focusedOwnerId} />
+          <Section
+            title="Trusts, LLCs & legal entities"
+            items={entities}
+            onEdit={openEdit}
+            focusedOwnerId={focusedOwnerId}
+            action={
+              <Button variant="outline" size="sm" onClick={() => openNew("entity")}>
+                <Plus className="h-4 w-4" /> Add entity
+              </Button>
+            }
+          />
         </div>
       )}
 
       <OwnerDialog
-        key={editing?.id ?? "new"}
+        key={editing?.id ?? `new-${mode}`}
         open={open}
         onOpenChange={setOpen}
         householdId={householdId}
         owner={editing}
+        mode={mode}
         onSaved={() => {
           setOpen(false);
-          toast({ title: editing ? "Owner updated" : "Owner added", variant: "success" });
+          toast({
+            title: editing ? "Owner updated" : mode === "entity" ? "Entity added" : "Family member added",
+            variant: "success",
+          });
           router.refresh();
         }}
       />
@@ -121,16 +155,24 @@ function Section({
   items,
   onEdit,
   focusedOwnerId,
+  action,
 }: {
   title: string;
   items: Owner[];
   onEdit: (o: Owner) => void;
   focusedOwnerId: string | null;
+  action?: React.ReactNode;
 }) {
-  if (items.length === 0) return null;
+  if (items.length === 0 && !action) return null;
   return (
     <div>
-      <h2 className="mb-3 text-sm font-medium text-muted-foreground">{title}</h2>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
+        {action}
+      </div>
+      {items.length === 0 && (
+        <p className="text-sm text-muted-foreground">No entities yet. Add a trust, LLC or other legal entity.</p>
+      )}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((o) => {
           const Icon = kindIcon(o.kind);
@@ -177,16 +219,18 @@ function OwnerDialog({
   onOpenChange,
   householdId,
   owner,
+  mode,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   householdId: string;
   owner: Owner | null;
+  mode: AddMode;
   onSaved: () => void;
 }) {
   const [name, setName] = useState(owner?.name ?? "");
-  const [kind, setKind] = useState<OwnerKind>(owner?.kind ?? "individual");
+  const [kind, setKind] = useState<OwnerKind>(owner?.kind ?? (mode === "entity" ? "trust" : "individual"));
   const [relationship, setRelationship] = useState(owner?.relationship ?? "");
   const [legalName, setLegalName] = useState(owner?.legal_name ?? "");
   const [trustType, setTrustType] = useState(owner?.trust_type ?? "");
@@ -198,6 +242,9 @@ function OwnerDialog({
   const [error, setError] = useState<string | null>(null);
 
   const isLegal = LEGAL_KINDS.includes(kind);
+  const isEntityForm = owner ? isLegal : mode === "entity";
+  const kindOptions = owner ? OWNER_KIND_LABELS : pick(isEntityForm ? LEGAL_KINDS : PERSON_KINDS);
+  const subtypeOptions = SUBTYPE_SUGGESTIONS[kind] ?? [];
 
   async function save() {
     setSaving(true);
@@ -230,22 +277,34 @@ function OwnerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{owner ? "Edit owner" : "Add owner"}</DialogTitle>
+          <DialogTitle>{owner ? "Edit owner" : isEntityForm ? "Add entity" : "Add family member"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <Field label="Name">
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Jane Smith or Smith Family Trust" />
+          <Field label={isEntityForm ? "Entity name" : "Name"}>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={isEntityForm ? "e.g. Morgan Family Trust" : "e.g. Jane Morgan"}
+            />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Type">
-              <EnumSelect value={kind} onChange={setKind} options={OWNER_KIND_LABELS} />
+              <EnumSelect value={kind} onChange={setKind} options={kindOptions} />
             </Field>
             <Field label={isLegal ? "Contact / role" : "Relationship"}>
               <Input
                 value={relationship}
                 onChange={(e) => setRelationship(e.target.value)}
                 placeholder={isLegal ? "Trustee" : "Spouse, Son…"}
+                list={isLegal ? "entity-role-options" : undefined}
               />
+              {isLegal && (
+                <datalist id="entity-role-options">
+                  {ROLE_SUGGESTIONS.map((o) => (
+                    <option key={o} value={o} />
+                  ))}
+                </datalist>
+              )}
             </Field>
           </div>
           {isLegal ? (
@@ -254,18 +313,24 @@ function OwnerDialog({
                 <Input value={legalName} onChange={(e) => setLegalName(e.target.value)} />
               </Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Sub-type">
+                <Field label={kind === "trust" ? "Trust type" : "Sub-type"}>
                   <Input
                     value={trustType}
                     onChange={(e) => setTrustType(e.target.value)}
-                    placeholder="Revocable / Irrevocable"
+                    placeholder={subtypeOptions[0] ?? "Sub-type"}
+                    list="entity-subtype-options"
                   />
+                  <datalist id="entity-subtype-options">
+                    {subtypeOptions.map((o) => (
+                      <option key={o} value={o} />
+                    ))}
+                  </datalist>
                 </Field>
                 <Field label="Grantor / Manager">
                   <Input value={grantor} onChange={(e) => setGrantor(e.target.value)} />
                 </Field>
               </div>
-              <Field label="Beneficiaries">
+              <Field label={kind === "trust" ? "Beneficiaries" : "Beneficiaries / Members"}>
                 <Textarea
                   value={beneficiaries}
                   onChange={(e) => setBeneficiaries(e.target.value)}

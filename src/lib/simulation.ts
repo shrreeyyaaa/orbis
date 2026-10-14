@@ -4,6 +4,19 @@
 export interface ProjectionLine {
   valueMinor: number; // signed (liabilities negative)
   growthPct: number; // annual %, can be negative
+  /** Percentage points added to the growth rate each year (year 1 uses growthPct). */
+  stepUpPct?: number;
+}
+
+/** Value of one line after `t` years (t may be fractional), applying the yearly step-up. */
+export function lineValueAt(l: ProjectionLine, t: number): number {
+  const step = l.stepUpPct ?? 0;
+  const full = Math.floor(t + 1e-9);
+  let v = l.valueMinor;
+  for (let k = 1; k <= full; k++) v *= 1 + (l.growthPct + step * (k - 1)) / 100;
+  const frac = t - full;
+  if (frac > 1e-9) v *= Math.pow(1 + (l.growthPct + step * full) / 100, frac);
+  return v;
 }
 
 export interface ProjectionInput {
@@ -35,7 +48,7 @@ export function projectNetWorth(input: ProjectionInput): ProjectionPoint[] {
   for (let t = 0; t <= years; t++) {
     let nominal = 0;
     for (const l of lines) {
-      nominal += l.valueMinor * Math.pow(1 + l.growthPct / 100, t);
+      nominal += lineValueAt(l, t);
     }
     nominal += contributionsFV(monthlyContributionMinor, t, contributionReturnPct);
     const real = nominal / Math.pow(1 + inflationPct / 100, t);

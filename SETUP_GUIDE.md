@@ -75,12 +75,13 @@ The app ships with an **Insights** feed and an **Ask Orbis** assistant that work
 of the box - the assistant answers common questions (net worth, allocation, savings
 rate, goals, concentration, insights) from your data using a built-in responder.
 
-To upgrade it to a full conversational LLM, add an API key to `.env.local` (pick one):
+To upgrade it to a full conversational LLM, add an API key to `.env.local`. You can
+add one or both: OpenAI is tried first, and Anthropic answers if OpenAI is not set
+or fails.
 
 ```bash
-OPENAI_API_KEY=sk-...
-# or
-ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...          # optional, default model gpt-4o-mini
+ANTHROPIC_API_KEY=sk-ant-...   # optional, default model claude-haiku-5-5
 ```
 
 Restart `npm run dev` after adding it. The assistant only ever uses the signed-in
@@ -131,7 +132,7 @@ Open http://localhost:3000:
 ### Net worth over time
 
 - Editing a value snapshots it into `valuations` (via triggers), building a time
-  series that powers the trend charts. The demo seeder backfills 12 months.
+  series that powers the trend charts. The sample-data seeder backfills 12 months.
 
 ## Production build
 

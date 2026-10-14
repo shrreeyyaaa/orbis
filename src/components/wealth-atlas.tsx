@@ -92,7 +92,7 @@ export function WealthAtlas({
       value: ownerValues.get(owner.id) ?? 0,
       href: `/family?focus=${encodeURIComponent(owner.id)}`,
       kind: "owner" as const, color: "#a97b34", icon: Landmark,
-      initial: owner.kind === "individual" ? (/^(You|Spouse) \((.+)\)/.exec(owner.name)?.[2] ?? owner.name).slice(0, 1) : undefined,
+      initial: owner.kind === "individual" ? owner.name.replace(/\s*\(.+\)\s*$/, "").slice(0, 1) : undefined,
       related: ownerGroups.get(owner.id) ?? new Set<string>(),
     }))
     .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));

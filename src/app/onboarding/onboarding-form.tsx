@@ -46,7 +46,7 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
   const [memberCount, setMemberCount] = useState(0);
   const [accountCount, setAccountCount] = useState(0);
   const [goalCount, setGoalCount] = useState(0);
-  const [demoLoaded, setDemoLoaded] = useState(false);
+  const [sampleLoaded, setSampleLoaded] = useState(false);
 
   async function createHousehold() {
     setBusy(true);
@@ -183,10 +183,10 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
             ownerId={defaultOwnerId}
             addedCount={accountCount}
             onAdded={() => setAccountCount((c) => c + 1)}
-            onDemo={async () => {
+            onSample={async () => {
               setBusy(true);
               await supabase.rpc("seed_demo_household", { p_household_id: householdId });
-              setDemoLoaded(true);
+              setSampleLoaded(true);
               setBusy(false);
               setStep(5);
             }}
@@ -213,7 +213,7 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
             memberCount={memberCount}
             accountCount={accountCount}
             goalCount={goalCount}
-            demoLoaded={demoLoaded}
+            sampleLoaded={sampleLoaded}
             onFinish={finish}
           />
         )}
@@ -340,7 +340,7 @@ function AccountsStep({
   ownerId,
   addedCount,
   onAdded,
-  onDemo,
+  onSample,
   busy,
   onBack,
   onNext,
@@ -349,7 +349,7 @@ function AccountsStep({
   ownerId: string | null;
   addedCount: number;
   onAdded: () => void;
-  onDemo: () => void;
+  onSample: () => void;
   busy: boolean;
   onBack: () => void;
   onNext: () => void;
@@ -386,7 +386,7 @@ function AccountsStep({
       />
       <button
         type="button"
-        onClick={onDemo}
+        onClick={onSample}
         disabled={busy}
         className="flex w-full items-center gap-3 rounded-lg border border-gold/40 bg-gold/5 p-3 text-left transition-colors hover:bg-gold/10 disabled:opacity-60"
       >
@@ -497,13 +497,13 @@ function FinishStep({
   memberCount,
   accountCount,
   goalCount,
-  demoLoaded,
+  sampleLoaded,
   onFinish,
 }: {
   memberCount: number;
   accountCount: number;
   goalCount: number;
-  demoLoaded: boolean;
+  sampleLoaded: boolean;
   onFinish: () => void;
 }) {
   return (
@@ -514,7 +514,7 @@ function FinishStep({
       <div className="space-y-2">
         <h1 className="font-serif text-3xl font-semibold tracking-tight">You&apos;re all set</h1>
         <p className="mx-auto max-w-md text-sm text-muted-foreground">
-          {demoLoaded
+          {sampleLoaded
             ? "Your sample portfolio is ready to explore."
             : `Created your family office${memberCount ? `, ${memberCount} owner(s)` : ""}${
                 accountCount ? `, ${accountCount} account(s)` : ""

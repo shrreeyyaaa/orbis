@@ -15,8 +15,8 @@ export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/dashboard";
-  const [email, setEmail] = useState("demo@orbis.local");
-  const [password, setPassword] = useState("demo123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,26 +39,7 @@ export function LoginForm() {
   }
 
   return (
-    <AuthShell title="Welcome back" subtitle="Sign in to your wealth dashboard.">
-      <button
-        type="button"
-        onClick={() => {
-          setEmail("demo@orbis.local");
-          setPassword("demo123");
-        }}
-        className="flex w-full flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2.5 text-left text-xs transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-      >
-        <span>
-          <span className="font-medium text-primary">Try demo</span>
-          <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground">
-            demo@orbis.local · demo123
-          </span>
-        </span>
-        <span className="rounded-md bg-primary/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-primary">
-          Fill
-        </span>
-      </button>
-
+    <AuthShell title="Welcome back" subtitle="Sign in to your wealth dashboard">
       <OAuthButtons next={next} />
 
       <form onSubmit={onSubmit} className="space-y-4">

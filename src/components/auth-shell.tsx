@@ -75,7 +75,7 @@ export function AuthShell({
           </div>
 
           <p className="mt-6 text-center text-[11px] tracking-wide text-muted-foreground">
-            Money in motion · Demo-ready · Private by household
+            Money in motion
           </p>
         </Reveal>
       </div>

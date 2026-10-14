@@ -23,11 +23,6 @@ export default async function AppLayout({
       exchangeRates={(ratesRes.data ?? []) as ExchangeRate[]}
       displayCurrency={ctx.member.display_currency}
       userEmail={ctx.userEmail}
-      demoMode={
-        !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-        !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-        process.env.NEXT_PUBLIC_SUPABASE_URL.includes("your-project-ref.supabase.co")
-      }
     >
       {children}
     </AppShell>
