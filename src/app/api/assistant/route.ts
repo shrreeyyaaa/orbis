@@ -39,7 +39,8 @@ export async function POST(request: Request) {
     } else {
       const llm = await callLLM(messages, snapshot);
       if (llm.text) {
-        answer = llm.text;
+        // Drop any disclaimer the model adds itself; the app appends its own below.
+        answer = llm.text.replace(/\s*Informational only[^\n]*\s*$/i, "").trim();
         mode = "cloud";
         provider = llm.provider;
       } else {
