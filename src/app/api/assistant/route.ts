@@ -32,17 +32,25 @@ export async function POST(request: Request) {
   let answer: string | null = null;
   let mode: "local" | "cloud" = "local";
   let provider: string | null = null;
-  if (body.allowCloud === true && hasLLM()) {
-    const llm = await callLLM(messages, snapshot);
-    if (llm) {
-      answer = llm.text;
-      mode = "cloud";
-      provider = llm.provider;
+  let cloudNote = "";
+  if (body.allowCloud === true) {
+    if (!hasLLM()) {
+      cloudNote = "Cloud AI is on, but the server has no API key. Check .env.local (or Vercel variables) and restart.";
+    } else {
+      const llm = await callLLM(messages, snapshot);
+      if (llm.text) {
+        answer = llm.text;
+        mode = "cloud";
+        provider = llm.provider;
+      } else {
+        cloudNote = `Cloud AI did not answer (${llm.error}). Showing the local answer instead.`;
+      }
     }
   }
   if (!answer) {
     answer = localAnswer(lastUser.content, snapshot);
   }
+  if (cloudNote) answer = `${answer}\n\n${cloudNote}`;
 
   return NextResponse.json({ reply: `${answer}\n\n${DISCLAIMER}`, mode, provider });
 }

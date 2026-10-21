@@ -96,6 +96,13 @@ export function AssistantPanel() {
               </Button>
             </header>
 
+            <div className="border-b bg-background/40 px-4 py-2.5">
+              <label className="flex cursor-pointer items-start gap-2.5 text-xs">
+                <input type="checkbox" checked={allowCloud} onChange={(event) => setAllowCloud(event.target.checked)} className="mt-0.5 h-4 w-4 accent-primary" />
+                <span><strong className="text-foreground">Allow cloud AI</strong> <span className="text-muted-foreground">- shares your household figures with the AI provider for the answers you ask next.</span></span>
+              </label>
+            </div>
+
             <div ref={scrollRef} aria-live="polite" className="flex-1 space-y-4 overflow-y-auto p-4">
               {messages.length === 0 && (
                 <div className="space-y-4">
@@ -103,10 +110,6 @@ export function AssistantPanel() {
                     <Info className="mt-0.5 h-4 w-4 shrink-0" />
                     Local mode analyzes the household snapshot inside Orbis. Cloud mode sends the current financial snapshot and this conversation to the configured AI provider. Answers are informational only, not financial advice.
                   </div>
-                  <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-border/70 bg-background/40 p-3 text-xs">
-                    <input type="checkbox" checked={allowCloud} onChange={(event) => setAllowCloud(event.target.checked)} className="mt-0.5 h-4 w-4 accent-primary" />
-                    <span><strong className="block text-foreground">Allow cloud AI for this conversation</strong><span className="mt-0.5 block text-muted-foreground">Shares household names, holdings, goals and financial figures with the configured provider.</span></span>
-                  </label>
                   <div className="flex flex-wrap gap-2">
                     {SUGGESTIONS.map((s) => (
                       <button

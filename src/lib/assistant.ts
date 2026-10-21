@@ -97,8 +97,22 @@ function systemPrompt(s: FinancialSnapshot): string {
 }
 
 export interface LLMResult {
-  text: string;
-  provider: "OpenAI" | "Anthropic";
+  text: string | null;
+  provider: "OpenAI" | "Anthropic" | null;
+  /** Why the cloud call failed (never contains keys). */
+  error?: string;
+}
+
+async function failure(name: string, res: Response): Promise<Error> {
+  let detail = "";
+  try {
+    const j = await res.json();
+    detail = j?.error?.message ?? j?.message ?? "";
+  } catch {
+    // ignore
+  }
+  detail = String(detail).replace(/sk-[A-Za-z0-9_\-]+/g, "[key]").slice(0, 300);
+  return new Error(`${name} returned ${res.status}${detail ? `: ${detail}` : ""}`);
 }
 
 async function callOpenAI(messages: ChatMessage[], sys: string, key: string, signal: AbortSignal): Promise<string | null> {
@@ -112,7 +126,7 @@ async function callOpenAI(messages: ChatMessage[], sys: string, key: string, sig
     }),
     signal,
   });
-  if (!res.ok) return null;
+  if (!res.ok) throw await failure("OpenAI", res);
   const json = await res.json();
   return json.choices?.[0]?.message?.content ?? null;
 }
@@ -124,6 +138,10 @@ async function callAnthropic(messages: ChatMessage[], sys: string, key: string, 
       "Content-Type": "application/json",
       "x-api-key": key,
       "anthropic-version": "2023-06-01",
+      // Needed for personal / multi-workspace keys; harmless to omit for workspace keys.
+      ...(process.env.ANTHROPIC_WORKSPACE_ID
+        ? { "anthropic-workspace-id": process.env.ANTHROPIC_WORKSPACE_ID }
+        : {}),
     },
     body: JSON.stringify({
       model: process.env.ANTHROPIC_MODEL || "claude-haiku-5-5",
@@ -133,7 +151,7 @@ async function callAnthropic(messages: ChatMessage[], sys: string, key: string, 
     }),
     signal,
   });
-  if (!res.ok) return null;
+  if (!res.ok) throw await failure("Anthropic", res);
   const json = await res.json();
   return json.content?.[0]?.text ?? null;
 }
@@ -142,10 +160,11 @@ async function callAnthropic(messages: ChatMessage[], sys: string, key: string, 
  * Calls OpenAI first when its key is set, then falls back to Anthropic if
  * OpenAI is missing, fails or returns nothing. Returns null if neither answers.
  */
-export async function callLLM(messages: ChatMessage[], s: FinancialSnapshot): Promise<LLMResult | null> {
+export async function callLLM(messages: ChatMessage[], s: FinancialSnapshot): Promise<LLMResult> {
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const sys = systemPrompt(s);
+  const errors: string[] = [];
 
   if (openaiKey) {
     const controller = new AbortController();
@@ -153,8 +172,8 @@ export async function callLLM(messages: ChatMessage[], s: FinancialSnapshot): Pr
     try {
       const text = await callOpenAI(messages, sys, openaiKey, controller.signal);
       if (text) return { text, provider: "OpenAI" };
-    } catch {
-      // fall through to Anthropic
+    } catch (e) {
+      errors.push(e instanceof Error ? e.message : "OpenAI request failed");
     } finally {
       clearTimeout(timeout);
     }
@@ -166,14 +185,14 @@ export async function callLLM(messages: ChatMessage[], s: FinancialSnapshot): Pr
     try {
       const text = await callAnthropic(messages, sys, anthropicKey, controller.signal);
       if (text) return { text, provider: "Anthropic" };
-    } catch {
-      // no provider answered
+    } catch (e) {
+      errors.push(e instanceof Error ? e.message : "Anthropic request failed");
     } finally {
       clearTimeout(timeout);
     }
   }
 
-  return null;
+  return { text: null, provider: null, error: errors.join(" | ") || "No provider returned an answer." };
 }
 
 export function hasLLM(): boolean {
