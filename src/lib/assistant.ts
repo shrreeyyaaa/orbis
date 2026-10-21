@@ -148,7 +148,7 @@ async function callAnthropic(messages: ChatMessage[], sys: string, key: string, 
     },
     body: JSON.stringify({
       model: process.env.ANTHROPIC_MODEL || "claude-haiku-5-5",
-      max_tokens: 700,
+      max_tokens: 2000,
       system: sys,
       messages: messages.map((m) => ({ role: m.role, content: m.content })),
     }),
@@ -156,7 +156,13 @@ async function callAnthropic(messages: ChatMessage[], sys: string, key: string, 
   });
   if (!res.ok) throw await failure("Anthropic", res);
   const json = await res.json();
-  return json.content?.[0]?.text ?? null;
+    const text = (Array.isArray(json.content) ? json.content : [])
+    .filter((b: { type?: string; text?: string }) => b?.type === "text" && typeof b.text === "string")
+    .map((b: { text: string }) => b.text)
+    .join("\n")
+    .trim();
+  if (!text) throw new Error(`Anthropic returned no text (stop_reason: ${json.stop_reason ?? "unknown"})`);
+  return text;;
 }
 
 /**
