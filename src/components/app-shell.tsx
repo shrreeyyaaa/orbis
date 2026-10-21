@@ -35,6 +35,7 @@ import { QuickAdd } from "@/components/quick-add";
 import { AssistantPanel, OPEN_ASSISTANT_EVENT } from "@/components/assistant/assistant-panel";
 import { PageEnter } from "@/components/motion/reveal";
 import { HookSidebar } from "@/components/hook-sidebar";
+import { OrbisLogo } from "@/components/orbis-logo";
 
 type NavItem = {
   href: string;
@@ -189,10 +190,7 @@ export function AppShell({
           <aside className="sticky top-0 hidden h-screen w-[16.5rem] shrink-0 flex-col overflow-hidden border-r border-border/80 bg-card/95 lg:flex">
             <div aria-hidden className="pointer-events-none absolute inset-0 opacity-70" style={{ background: "radial-gradient(80% 36% at 12% 0%, hsl(var(--orbit) / .16), transparent 70%)" }} />
             <Link href="/dashboard" className="relative flex h-[4.25rem] items-center gap-3 border-b border-border/70 px-5">
-              <span className="relative flex h-9 w-9 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
-                <span className="absolute inset-1 rounded-full border border-primary/20" />
-                <LineChart className="h-4 w-4 text-primary" aria-hidden />
-              </span>
+              <OrbisLogo className="h-10 w-10" />
               <span>
                 <span className="block font-serif text-xl font-semibold tracking-tight">Orbis</span>
                 <span className="block text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Living wealth atlas</span>
@@ -250,9 +248,7 @@ export function AppShell({
             <div className="sticky top-0 z-30 border-b border-border/70 bg-background/88 backdrop-blur-xl">
               <header className="flex h-14 items-center gap-2 px-3 lg:px-7">
                 <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-primary/30 bg-primary/10">
-                    <LineChart className="h-3.5 w-3.5 text-primary" aria-hidden />
-                  </span>
+                  <OrbisLogo className="h-8 w-8" />
                   <span className="hidden font-serif text-lg font-semibold min-[360px]:inline">Orbis</span>
                 </Link>
 

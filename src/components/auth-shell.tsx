@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { LineChart } from "lucide-react";
+import { OrbisLogo } from "@/components/orbis-logo";
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Reveal } from "@/components/motion/reveal";
@@ -60,7 +60,7 @@ export function AuthShell({
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 pb-10 pt-20">
         <Reveal className="w-full max-w-[420px]">
           <Link href="/" className="mb-8 flex items-center justify-center gap-2">
-            <LineChart className="h-5 w-5 text-primary" />
+            <OrbisLogo className="h-8 w-8" />
             <span className="font-serif text-xl font-semibold tracking-tight">Orbis</span>
           </Link>
 

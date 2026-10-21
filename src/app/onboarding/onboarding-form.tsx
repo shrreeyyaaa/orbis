@@ -12,8 +12,8 @@ import {
   GOAL_TYPE_LABELS,
 } from "@/lib/labels";
 import type { AccountType, GoalType, OwnerKind } from "@/lib/types";
+import { OrbisLogo } from "@/components/orbis-logo";
 import {
-  LineChart,
   ArrowRight,
   ArrowLeft,
   Check,
@@ -93,7 +93,7 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
   return (
     <div className="flex min-h-screen flex-col items-center bg-background px-4 py-10">
       <div className="mb-8 flex items-center gap-2">
-        <LineChart className="h-6 w-6 text-gold" />
+        <OrbisLogo className="h-9 w-9" />
         <span className="font-serif text-xl font-semibold tracking-tight">Orbis</span>
       </div>
 

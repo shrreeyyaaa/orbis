@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LineChart, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { OrbisLogo } from "@/components/orbis-logo";
 import { createClient } from "@/lib/supabase/server";
 import { getHouseholdContext } from "@/lib/household";
 import { LandingHero } from "@/components/landing-hero";
@@ -22,7 +23,7 @@ export default async function Home() {
       <LandingHero />
       <header className="relative z-10 flex items-center justify-between px-6 py-5 lg:px-10">
         <div className="flex items-center gap-2">
-          <LineChart className="h-5 w-5 text-emerald-400" />
+          <span className="dark inline-flex"><OrbisLogo className="h-8 w-8" /></span>
           <span className="font-serif text-xl font-semibold tracking-tight">Orbis</span>
         </div>
         <div className="flex items-center gap-3">
