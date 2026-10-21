@@ -21,7 +21,6 @@ export function AssistantPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [allowCloud, setAllowCloud] = useState(false);
   const [responseMode, setResponseMode] = useState<"local" | "cloud">("local");
   const [provider, setProvider] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -47,7 +46,7 @@ export function AssistantPanel() {
       const res = await fetch("/api/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next, allowCloud }),
+        body: JSON.stringify({ messages: next, allowCloud: true }),
       });
       const json = await res.json();
       setResponseMode(json.mode === "cloud" ? "cloud" : "local");
@@ -96,19 +95,12 @@ export function AssistantPanel() {
               </Button>
             </header>
 
-            <div className="border-b bg-background/40 px-4 py-2.5">
-              <label className="flex cursor-pointer items-start gap-2.5 text-xs">
-                <input type="checkbox" checked={allowCloud} onChange={(event) => setAllowCloud(event.target.checked)} className="mt-0.5 h-4 w-4 accent-primary" />
-                <span><strong className="text-foreground">Allow cloud AI</strong> <span className="text-muted-foreground">- shares your household figures with the AI provider for the answers you ask next.</span></span>
-              </label>
-            </div>
-
             <div ref={scrollRef} aria-live="polite" className="flex-1 space-y-4 overflow-y-auto p-4">
               {messages.length === 0 && (
                 <div className="space-y-4">
                   <div className="flex items-start gap-2 rounded-lg bg-accent/60 p-3 text-xs text-muted-foreground">
                     <Info className="mt-0.5 h-4 w-4 shrink-0" />
-                    Local mode analyzes the household snapshot inside Orbis. Cloud mode sends the current financial snapshot and this conversation to the configured AI provider. Answers are informational only, not financial advice.
+                    Ask Orbis uses a cloud AI provider: your household figures and this conversation are sent to it to answer your questions. Answers are informational only, not financial advice.
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {SUGGESTIONS.map((s) => (
